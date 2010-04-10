@@ -13,7 +13,7 @@ Right now if more than one matcher matches any given route, it throws an excepti
 
 Below is an example for configuring the middleware:
 
-  require 'lib/rack/reverse_proxy'
+  require 'rack/reverse_proxy'
 
   use Rack::ReverseProxy do 
     # Forward the path /test* to http://example.com/test*
