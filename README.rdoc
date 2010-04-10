@@ -1,6 +1,27 @@
-= rack-reverse-proxy
+= A Reverse Proxy for Rack
 
-Description goes here.
+This is a simple reverse proxy for Rack that pretty heavily rips off Rack Forwarder.  It is not meant for production systems (although it may work), as the webserver fronting your app is generally much better at this sort of thing.
+
+Matchers can be a regex or a string.  If a regex is used, you can use the subcaptures in your forwarding url by denoting them with a $.
+
+Right now if more than one matcher matches any given route, it throws an exception for an ambiguous match.  This will probably change later.  If no match is found, the call is forwarded to your application.
+
+Below is an example for configuring the middleware:
+
+  require 'lib/rack/reverse_proxy'
+
+  use Rack::ReverseProxy do 
+    # Forward the path /test* to http://example.com/test*
+    reverse_proxy '/test', 'http://example.com/'
+
+    # Forward the path /foo/* to http://example.com/bar/*
+    reverse_proxy /^\/foo(\/.*)$/, 'http://example.com/bar$1'
+  end
+
+  app = proc do |env|
+    [ 200, {'Content-Type' => 'text/plain'}, "b" ]
+  end
+  run app
 
 == Note on Patches/Pull Requests
  
