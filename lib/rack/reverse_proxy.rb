@@ -73,7 +73,20 @@ module Rack
     end
 
     def reverse_proxy matcher, url
+      raise GenericProxyURI.new(url) if matcher.is_a?(String) && URI(url).class == URI::Generic
       @paths.merge!(matcher => url)
+    end
+  end
+
+  class GenericProxyURI < Exception
+    attr_reader :url
+
+    def intialize(url)
+      @url = url
+    end
+
+    def to_s
+      %Q(Your URL "#{@url}" is too generic. Did you mean "http://#{@url}"?)
     end
   end
 

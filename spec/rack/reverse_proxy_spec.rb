@@ -58,6 +58,34 @@ describe Rack::ReverseProxy do
       end
     end
 
+    describe "with a route as a string" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy '/test', 'http://example.com'
+          reverse_proxy '/path', 'http://example.com/foo$0'
+        end
+      end
+
+      it "should append the full path to the uri" do
+        stub_request(:get, 'http://example.com/test/stuff').to_return({:body => "Proxied App"})
+        get '/test/stuff'
+        last_response.body.should == "Proxied App"
+      end
+
+    end
+
+    describe "with a generic url" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy '/test', 'example.com'
+        end
+      end
+
+      it "should throw an exception" do
+        lambda{ app }.should raise_error(Rack::GenericProxyURI)
+      end
+    end
+
     describe "with a matching route" do
       def app
         Rack::ReverseProxy.new(dummy_app) do
