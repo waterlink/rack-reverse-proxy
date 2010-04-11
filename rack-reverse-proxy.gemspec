@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{rack-reverse-proxy}
-  s.version = "0.1.0"
+  s.version = "0.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Jon Swope"]
-  s.date = %q{2010-04-10}
+  s.date = %q{2010-04-11}
   s.description = %q{A Rack based reverse proxy for basic needs.  Useful for testing or in cases where webserver configuration is unavailable.}
   s.email = %q{jaswope@gmail.com}
   s.extra_rdoc_files = [
