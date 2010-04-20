@@ -21,22 +21,27 @@ module Rack
         end
       }
  
-      res = Net::HTTP.start(uri.host, uri.port) { |http|
+      Net::HTTP.start(uri.host, uri.port) { |http|
         m = rackreq.request_method
         case m
         when "GET", "HEAD", "DELETE", "OPTIONS", "TRACE"
-          req = Net::HTTP.const_get(m.capitalize).new(uri.path, headers)
+          req = Net::HTTP.const_get(m.capitalize).new(uri.request_uri, headers)
         when "PUT", "POST"
-          req = Net::HTTP.const_get(m.capitalize).new(uri.path, headers)
+          req = Net::HTTP.const_get(m.capitalize).new(uri.request_uri, headers)
+          req.content_length = rackreq.body.length
           req.body_stream = rackreq.body
         else
-          raise "method not supported: #{method}"
+          raise "method not supported: #{m}"
         end
 
-        http.request(req)
+        body = ''
+        res = http.request(req) do |res|
+          res.read_body do |segment|
+            body << segment
+          end
+        end
+        [res.code, Rack::Utils::HeaderHash.new(res.to_hash), [body]]
       }
- 
-      [res.code, Rack::Utils::HeaderHash.new(res.to_hash), [res.body]]
     end
     
     private
