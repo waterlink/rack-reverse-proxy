@@ -103,11 +103,9 @@ describe Rack::ReverseProxy do
 
           if %w|put post|.include?(method)
             it "should forward the request payload" do
-              pending "valid test with next release of WebMock" do
-                stub_request(method.to_sym, 'http://example.com/test').to_return { |req| {:body => req.body} }
-                eval "#{method} '/test', {:test => 'test'}"
-                last_response.body.should == "test=test"
-              end
+              stub_request(method.to_sym, 'http://example.com/test').to_return { |req| {:body => req.body} }
+              eval "#{method} '/test', {:test => 'test'}"
+              last_response.body.should == "test=test"
             end
           end
         end
