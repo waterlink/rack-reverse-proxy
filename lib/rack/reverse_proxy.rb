@@ -1,4 +1,5 @@
 require 'net/http'
+require 'net/https'
 
 module Rack
   class ReverseProxy
@@ -20,8 +21,12 @@ module Rack
           headers[$1] = value
         end
       }
+			headers['HOST'] = uri.host
  
-      Net::HTTP.start(uri.host, uri.port) { |http|
+			session = Net::HTTP.new(uri.host, uri.port)
+			session.use_ssl = (uri.scheme == 'https')
+			session.verify_mode = OpenSSL::SSL::VERIFY_NONE
+			session.start { |http|
         m = rackreq.request_method
         case m
         when "GET", "HEAD", "DELETE", "OPTIONS", "TRACE"
@@ -40,7 +45,8 @@ module Rack
             body << segment
           end
         end
-        [res.code, Rack::Utils::HeaderHash.new(res.to_hash), [body]]
+				h = res.to_hash.reject { |k,v| k.downcase == 'status' }
+        [res.code, Rack::Utils::HeaderHash.new(h), [body]]
       }
     end
     
