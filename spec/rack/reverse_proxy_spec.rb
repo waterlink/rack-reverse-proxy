@@ -12,7 +12,6 @@ describe Rack::ReverseProxy do
     lambda { [200, {}, ['Dummy App']] }
   end
 
-
   describe "as middleware" do
     def app
       Rack::ReverseProxy.new(dummy_app) do
@@ -31,6 +30,18 @@ describe Rack::ReverseProxy do
       get '/test'
       last_response.body.should == "Proxied App"
     end
+
+		it "the response header should never contain Status" do
+			stub_request(:any, 'example.com/test/stuff').to_return(:headers => {'Status' => '200 OK'})
+			get '/test/stuff'
+			last_response.headers['Status'].should == nil
+		end
+
+		it "should set the Host header" do
+			stub_request(:any, 'example.com/test/stuff')
+			get '/test/stuff'
+			a_request(:get, 'http://example.com/test/stuff').with(:headers => {"Host" => "example.com"}).should have_been_made
+		end
 
     describe "with ambiguous routes" do
       def app
@@ -66,11 +77,12 @@ describe Rack::ReverseProxy do
         end
       end
 
-			it "should rewrite HOST" do
-        stub_request(:get, 'https://example.com/test/stuff').with(:headers => {"Host" => "example.com"}).to_return({:body => "Proxied App"})
+			it "should make a secure request" do
+        stub_request(:get, 'https://example.com/test/stuff').to_return({:body => "Proxied Secure App"})
         get '/test/stuff'
-        last_response.body.should == "Proxied App"
+        last_response.body.should == "Proxied Secure App"
 			end
+
 		end
 
     describe "with a route as a string" do
