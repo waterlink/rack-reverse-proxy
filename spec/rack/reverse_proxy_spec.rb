@@ -12,6 +12,7 @@ describe Rack::ReverseProxy do
     lambda { [200, {}, ['Dummy App']] }
   end
 
+
   describe "as middleware" do
     def app
       Rack::ReverseProxy.new(dummy_app) do
@@ -57,6 +58,20 @@ describe Rack::ReverseProxy do
         last_response.body.should == "Proxied App"
       end
     end
+
+		describe "with a https route" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy '/test', 'https://example.com'
+        end
+      end
+
+			it "should rewrite HOST" do
+        stub_request(:get, 'https://example.com/test/stuff').with(:headers => {"Host" => "example.com"}).to_return({:body => "Proxied App"})
+        get '/test/stuff'
+        last_response.body.should == "Proxied App"
+			end
+		end
 
     describe "with a route as a string" do
       def app
