@@ -12,7 +12,7 @@ begin
     gem.authors = ["Jon Swope"]
     gem.add_development_dependency "rspec", ">= 0"
     gem.add_development_dependency "rack-test", ">= 0"
-    gem.add_development_dependency "webmock", ">= 0"
+    gem.add_development_dependency "webmock", "~> 1.5.0"
     gem.add_dependency "rack", ">= 1.0.0"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
