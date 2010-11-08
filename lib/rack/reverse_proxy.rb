@@ -45,8 +45,8 @@ module Rack
             body << segment
           end
         end
-				h = res.to_hash.reject { |k,v| k.downcase == 'status' }
-        [res.code, Rack::Utils::HeaderHash.new(h), [body]]
+
+        [res.code, create_response_headers(res), [body]]
       }
     end
     
@@ -64,6 +64,14 @@ module Rack
       else
         matches.first.map{|a| a.dup}
       end
+    end
+
+    def create_response_headers http_response
+      response_headers = Rack::Utils::HeaderHash.new(http_response.to_hash)
+      # handled by Rack
+      response_headers.delete('status')
+      # TODO: Verify Content Length, and required Rack headers
+      response_headers
     end
 
     def match_path(path, matcher)
