@@ -6,6 +6,7 @@ module Rack
     def initialize(app = nil, &b)
       @app = app || lambda { [404, [], []] }
       @paths = {}
+      @opts = {:preserve_host => false}
       instance_eval &b if block_given?
     end
 
@@ -21,7 +22,7 @@ module Rack
           headers[$1] = value
         end
       }
-			headers['HOST'] = uri.host
+			headers['HOST'] = uri.host if @opts[:preserve_host]
  
 			session = Net::HTTP.new(uri.host, uri.port)
 			session.use_ssl = (uri.scheme == 'https')
@@ -31,8 +32,10 @@ module Rack
         case m
         when "GET", "HEAD", "DELETE", "OPTIONS", "TRACE"
           req = Net::HTTP.const_get(m.capitalize).new(uri.request_uri, headers)
+          req.basic_auth @opts[:username], @opts[:password] if @opts[:username] and @opts[:password]
         when "PUT", "POST"
           req = Net::HTTP.const_get(m.capitalize).new(uri.request_uri, headers)
+          req.basic_auth @opts[:username], @opts[:password] if @opts[:username] and @opts[:password]
           req.content_length = rackreq.body.length
           req.body_stream = rackreq.body
         else
@@ -70,6 +73,8 @@ module Rack
       response_headers = Rack::Utils::HeaderHash.new(http_response.to_hash)
       # handled by Rack
       response_headers.delete('status')
+      # TODO: figure out how to handle chunked responses
+      response_headers.delete('transfer-encoding')
       # TODO: Verify Content Length, and required Rack headers
       response_headers
     end
@@ -91,9 +96,10 @@ module Rack
       end
     end
 
-    def reverse_proxy matcher, url
+    def reverse_proxy matcher, url, opts={}
       raise GenericProxyURI.new(url) if matcher.is_a?(String) && URI(url).class == URI::Generic
       @paths.merge!(matcher => url)
+      @opts.merge!(opts)
     end
   end
 

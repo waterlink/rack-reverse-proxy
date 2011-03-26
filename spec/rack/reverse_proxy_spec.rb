@@ -15,7 +15,7 @@ describe Rack::ReverseProxy do
   describe "as middleware" do
     def app
       Rack::ReverseProxy.new(dummy_app) do
-        reverse_proxy '/test', 'http://example.com/'
+        reverse_proxy '/test', 'http://example.com/', {:preserve_host => true}
       end
     end
 
@@ -37,11 +37,45 @@ describe Rack::ReverseProxy do
 			last_response.headers['Status'].should == nil
 		end
 
+		it "the response header should never transfer-encoding" do
+			stub_request(:any, 'example.com/test/stuff').to_return(:headers => {'transfer-encoding' => 'Chunked'})
+			get '/test/stuff'
+			last_response.headers['transfer-encoding'].should == nil
+		end
+
 		it "should set the Host header" do
 			stub_request(:any, 'example.com/test/stuff')
 			get '/test/stuff'
 			a_request(:get, 'http://example.com/test/stuff').with(:headers => {"Host" => "example.com"}).should have_been_made
 		end
+
+    describe "with preserve host turned off" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy '/test', 'http://example.com/'
+        end
+      end
+
+      it "should not set the Host header" do
+        stub_request(:any, 'example.com/test/stuff')
+        get '/test/stuff'
+        a_request(:get, 'http://example.com/test/stuff').should have_been_made
+      end
+    end
+
+    describe "with basic auth turned on" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy '/test', 'http://example.com/', {:username => "joe", :password => "shmoe"}
+        end
+      end
+
+      it "should make request with basic auth" do
+        stub_request(:get, "http://joe:shmoe@example.com/test/stuff").to_return(:body => "secured content")
+        get '/test/stuff'
+        last_response.body.should == "secured content"
+      end
+    end
 
     describe "with ambiguous routes" do
       def app
