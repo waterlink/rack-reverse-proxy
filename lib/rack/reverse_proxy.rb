@@ -6,7 +6,7 @@ module Rack
     def initialize(app = nil, &b)
       @app = app || lambda { [404, [], []] }
       @matchers = []
-      @global_options = {:preserve_host => false}
+      @global_options = {:preserve_host => false,:matching => :all}
       instance_eval &b if block_given?
     end
 
@@ -63,7 +63,7 @@ module Rack
 
       if matches.length < 1
         nil
-      elsif matches.length > 1
+      elsif matches.length > 1 && @global_options[:matching] != :first
         raise AmbiguousProxyMatch.new(path, matches)
       else
         matches.first
