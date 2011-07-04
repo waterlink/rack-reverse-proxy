@@ -16,6 +16,8 @@ describe Rack::ReverseProxy do
     def app
       Rack::ReverseProxy.new(dummy_app) do
         reverse_proxy '/test', 'http://example.com/', {:preserve_host => true}
+        reverse_proxy '/2test', lambda{'http://example.com/'}
+
       end
     end
 
@@ -29,6 +31,12 @@ describe Rack::ReverseProxy do
       stub_request(:get, 'http://example.com/test').to_return({:body => "Proxied App"})
       get '/test'
       last_response.body.should == "Proxied App"
+    end
+
+    it "should proxy requests to a lambda url when a pattern is matched" do
+      stub_request(:get, 'http://example.com/2test').to_return({:body => "Proxied App2"})
+      get '/2test'
+      last_response.body.should == "Proxied App2"
     end
 
 		it "the response header should never contain Status" do

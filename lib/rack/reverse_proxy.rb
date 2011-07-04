@@ -15,7 +15,7 @@ module Rack
       matcher = get_matcher rackreq.fullpath
       return @app.call(env) if matcher.nil?
 
-      uri = matcher.get_uri(rackreq.fullpath)
+      uri = matcher.get_uri(rackreq.fullpath,env)
       all_opts = @global_options.dup.merge(matcher.options)
       headers = Rack::Utils::HeaderHash.new
       env.each { |key, value|
@@ -86,7 +86,7 @@ module Rack
     end
 
     def reverse_proxy matcher, url, opts={}
-      raise GenericProxyURI.new(url) if matcher.is_a?(String) && URI(url).class == URI::Generic
+      raise GenericProxyURI.new(url) if matcher.is_a?(String) && url.is_a?(String) && URI(url).class == URI::Generic
       @matchers << ReverseProxyMatcher.new(matcher,url,opts)
     end
   end
@@ -135,12 +135,13 @@ module Rack
       match_path(path) ? true : false
     end
 
-    def get_uri(path)
-      if url =~/\$\d/
-        match_path(path).to_a.each_with_index { |m, i| url.gsub!("$#{i.to_s}", m) }
-        URI(url)
+    def get_uri(path,env)
+      _url=(url.respond_to?(:call) ? url.call(env) : url)
+      if _url =~/\$\d/
+        match_path(path).to_a.each_with_index { |m, i| _url.gsub!("$#{i.to_s}", m) }
+        URI(_url)
       else
-        URI.join(url, path)
+        URI.join(_url, path)
       end
     end
     def to_s
