@@ -6,7 +6,7 @@ module Rack
     def initialize(app = nil, &b)
       @app = app || lambda { [404, [], []] }
       @matchers = []
-      @global_options = {}
+      @global_options = {:preserve_host => false}
       instance_eval &b if block_given?
     end
 
@@ -16,7 +16,7 @@ module Rack
       return @app.call(env) if matcher.nil?
 
       uri = matcher.get_uri(rackreq.fullpath)
-      all_opts = matcher.options #TODO: merge with global opts
+      all_opts = @global_options.dup.merge(matcher.options)
       headers = Rack::Utils::HeaderHash.new
       env.each { |key, value|
         if key =~ /HTTP_(.*)/
@@ -81,6 +81,10 @@ module Rack
     end
 
 
+    def reverse_proxy_options(options)
+      @global_options=options
+    end
+
     def reverse_proxy matcher, url, opts={}
       raise GenericProxyURI.new(url) if matcher.is_a?(String) && URI(url).class == URI::Generic
       @matchers << ReverseProxyMatcher.new(matcher,url,opts)
@@ -121,7 +125,7 @@ module Rack
     def initialize(matching,url,options)
       @matching=matching
       @url=url
-      @options={:preserve_host => false}.merge(options)
+      @options=options
       @matching_regexp= matching.kind_of?(Regexp) ? matching : /^#{matching.to_s}/
     end
 
