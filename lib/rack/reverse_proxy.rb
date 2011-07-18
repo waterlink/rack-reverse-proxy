@@ -37,7 +37,7 @@ module Rack
         when "PUT", "POST"
           req = Net::HTTP.const_get(m.capitalize).new(uri.request_uri, headers)
           req.basic_auth all_opts[:username], all_opts[:password] if all_opts[:username] and all_opts[:password]
-          req.content_length = rackreq.body.length
+          req.content_length = rackreq.body.size
           req.body_stream = rackreq.body
         else
           raise "method not supported: #{m}"
