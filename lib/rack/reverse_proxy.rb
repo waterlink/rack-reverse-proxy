@@ -28,6 +28,7 @@ module Rack
 			session = Net::HTTP.new(uri.host, uri.port)
 			session.use_ssl = (uri.scheme == 'https')
 			session.verify_mode = OpenSSL::SSL::VERIFY_NONE
+			session.read_timeout=all_opts[:timeout] if all_opts[:timeout]
 			session.start { |http|
         m = rackreq.request_method
         case m

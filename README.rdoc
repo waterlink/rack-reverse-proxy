@@ -35,6 +35,7 @@ revers_proxy_options set global options for all reverse proxies. Available optio
   * :username username for basic auth
   * :password password for basic auth
   * :matching is a global only option, if set to :first the first matched url will be requested (no ambigous error). Default: :all.
+  * :timeout seconds to timout the requests
 == Note on Patches/Pull Requests
  
 * Fork the project.
