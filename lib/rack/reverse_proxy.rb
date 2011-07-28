@@ -15,19 +15,19 @@ module Rack
       matcher, url = get_matcher_and_url rackreq.fullpath
       return @app.call(env) if matcher.nil?
 
-      uri = get_uri(url, matcher, rackreq.fullpath) 
+      uri = get_uri(url, matcher, rackreq.fullpath)
       headers = Rack::Utils::HeaderHash.new
       env.each { |key, value|
         if key =~ /HTTP_(.*)/
           headers[$1] = value
         end
       }
-			headers['HOST'] = uri.host if @opts[:preserve_host]
- 
-			session = Net::HTTP.new(uri.host, uri.port)
-			session.use_ssl = (uri.scheme == 'https')
-			session.verify_mode = OpenSSL::SSL::VERIFY_NONE
-			session.start { |http|
+      headers['HOST'] = uri.host if @opts[:preserve_host]
+
+      session = Net::HTTP.new(uri.host, uri.port)
+      session.use_ssl = (uri.scheme == 'https')
+      session.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      session.start { |http|
         m = rackreq.request_method
         case m
         when "GET", "HEAD", "DELETE", "OPTIONS", "TRACE"
@@ -52,7 +52,7 @@ module Rack
         [res.code, create_response_headers(res), [body]]
       }
     end
-    
+
     private
 
     def get_matcher_and_url path
