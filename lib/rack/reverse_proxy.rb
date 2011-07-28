@@ -6,7 +6,7 @@ module Rack
     def initialize(app = nil, &b)
       @app = app || lambda { [404, [], []] }
       @matchers = []
-      @global_options = {:preserve_host => false,:matching => :all}
+      @global_options = {:preserve_host => false, :matching => :all, :verify_ssl => true}
       instance_eval &b if block_given?
     end
 
@@ -26,9 +26,15 @@ module Rack
 			headers['HOST'] = uri.host if all_opts[:preserve_host]
  
 			session = Net::HTTP.new(uri.host, uri.port)
-			session.use_ssl = (uri.scheme == 'https')
-			session.verify_mode = OpenSSL::SSL::VERIFY_NONE
 			session.read_timeout=all_opts[:timeout] if all_opts[:timeout]
+
+      session.use_ssl = (uri.scheme == 'https')
+      if uri.scheme == 'https' && all_opts[:verify_ssl]
+        session.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      else
+        # DO NOT DO THIS IN PRODUCTION !!!
+        session.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      end
 			session.start { |http|
         m = rackreq.request_method
         case m
@@ -54,7 +60,7 @@ module Rack
         [res.code, create_response_headers(res), [body]]
       }
     end
-    
+
     private
 
     def get_matcher path
