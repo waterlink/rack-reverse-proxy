@@ -33,12 +33,13 @@ Below is an example for configuring the middleware:
   end
   run app
 
-revers_proxy_options set global options for all reverse proxies. Available options are:
-  * :preserve_host
-  * :username username for basic auth
-  * :password password for basic auth
-  * :matching is a global only option, if set to :first the first matched url will be requested (no ambigous error). Default: :all.
-  * :timeout seconds to timout the requests
+reverse_proxy_options sets global options for all reverse proxies. Available options are:
+* :preserve_host Set to false to omit Host headers
+* :username username for basic auth
+* :password password for basic auth
+* :matching is a global only option, if set to :first the first matched url will be requested (no ambigous error). Default: :all.
+* :timeout seconds to timout the requests
+
 == Note on Patches/Pull Requests
  
 * Fork the project.
