@@ -6,6 +6,9 @@ This is a simple reverse proxy for Rack that pretty heavily rips off Rack Forwar
 The gem is available on gemcutter.  Assuming you have a recent version of Rubygems you should just be able to install it via:
   gem install rack-reverse-proxy
 
+For your Gemfile use:
+  gem "rack-reverse-proxy", :require => "rack/reverse_proxy"
+
 == Usage
 Matchers can be a regex or a string.  If a regex is used, you can use the subcaptures in your forwarding url by denoting them with a $.
 
