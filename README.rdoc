@@ -17,10 +17,12 @@ Below is an example for configuring the middleware:
 
   use Rack::ReverseProxy do 
     # Forward the path /test* to http://example.com/test*
+    reverse_proxy_options :preserve_host => true
+        
     reverse_proxy '/test', 'http://example.com/'
 
     # Forward the path /foo/* to http://example.com/bar/*
-    reverse_proxy /^\/foo(\/.*)$/, 'http://example.com/bar$1'
+    reverse_proxy /^\/foo(\/.*)$/, 'http://example.com/bar$1', :username => 'name', :password => 'basic_auth_secret'
   end
 
   app = proc do |env|
@@ -28,6 +30,12 @@ Below is an example for configuring the middleware:
   end
   run app
 
+revers_proxy_options set global options for all reverse proxies. Available options are:
+  * :preserve_host
+  * :username username for basic auth
+  * :password password for basic auth
+  * :matching is a global only option, if set to :first the first matched url will be requested (no ambigous error). Default: :all.
+  * :timeout seconds to timout the requests
 == Note on Patches/Pull Requests
  
 * Fork the project.

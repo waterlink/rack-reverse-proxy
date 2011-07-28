@@ -16,6 +16,8 @@ describe Rack::ReverseProxy do
     def app
       Rack::ReverseProxy.new(dummy_app) do
         reverse_proxy '/test', 'http://example.com/', {:preserve_host => true}
+        reverse_proxy '/2test', lambda{'http://example.com/'}
+
       end
     end
 
@@ -29,6 +31,12 @@ describe Rack::ReverseProxy do
       stub_request(:get, 'http://example.com/test').to_return({:body => "Proxied App"})
       get '/test'
       last_response.body.should == "Proxied App"
+    end
+
+    it "should proxy requests to a lambda url when a pattern is matched" do
+      stub_request(:get, 'http://example.com/2test').to_return({:body => "Proxied App2"})
+      get '/2test'
+      last_response.body.should == "Proxied App2"
     end
 
 		it "the response header should never contain Status" do
@@ -77,9 +85,10 @@ describe Rack::ReverseProxy do
       end
     end
 
-    describe "with ambiguous routes" do
+    describe "with ambiguous routes and all matching" do
       def app
         Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy_options :matching => :all
           reverse_proxy '/test', 'http://example.com/'
           reverse_proxy /^\/test/, 'http://example.com/'
         end
@@ -87,6 +96,22 @@ describe Rack::ReverseProxy do
 
       it "should throw an exception" do
         lambda { get '/test' }.should raise_error(Rack::AmbiguousProxyMatch)
+      end
+    end
+
+    describe "with ambiguous routes and first matching" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy_options :matching => :first
+          reverse_proxy '/test', 'http://example1.com/'
+          reverse_proxy /^\/test/, 'http://example2.com/'
+        end
+      end
+
+      it "should throw an exception" do
+       stub_request(:get, 'http://example1.com/test').to_return({:body => "Proxied App"})
+       get '/test'
+       last_response.body.should == "Proxied App"
       end
     end
 
