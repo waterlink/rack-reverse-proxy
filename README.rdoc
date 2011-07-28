@@ -19,9 +19,10 @@ Below is an example for configuring the middleware:
   require 'rack/reverse_proxy'
 
   use Rack::ReverseProxy do 
-    # Forward the path /test* to http://example.com/test*
+    # Set :preserve_host to true globally (default is true already)
     reverse_proxy_options :preserve_host => true
-        
+
+    # Forward the path /test* to http://example.com/test*
     reverse_proxy '/test', 'http://example.com/'
 
     # Forward the path /foo/* to http://example.com/bar/*
