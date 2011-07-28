@@ -9,15 +9,14 @@ describe Rack::ReverseProxy do
   end
 
   def dummy_app
-    lambda { [200, {}, ['Dummy App']] }
+    lambda { |env| [200, {}, ['Dummy App']] }
   end
 
   describe "as middleware" do
     def app
       Rack::ReverseProxy.new(dummy_app) do
         reverse_proxy '/test', 'http://example.com/', {:preserve_host => true}
-        reverse_proxy '/2test', lambda{'http://example.com/'}
-
+        reverse_proxy '/2test', lambda{ |env| 'http://example.com/'}
       end
     end
 

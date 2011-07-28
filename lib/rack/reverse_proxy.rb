@@ -4,7 +4,7 @@ require 'net/https'
 module Rack
   class ReverseProxy
     def initialize(app = nil, &b)
-      @app = app || lambda { [404, [], []] }
+      @app = app || lambda {|env| [404, [], []] }
       @matchers = []
       @global_options = {:preserve_host => true, :matching => :all, :verify_ssl => true}
       instance_eval &b if block_given?
