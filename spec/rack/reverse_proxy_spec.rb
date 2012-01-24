@@ -59,13 +59,14 @@ describe Rack::ReverseProxy do
     describe "with preserve host turned off" do
       def app
         Rack::ReverseProxy.new(dummy_app) do
-          reverse_proxy '/test', 'http://example.com/'
+          reverse_proxy '/test', 'http://example.com/', {:preserve_host => false}
         end
       end
 
       it "should not set the Host header" do
         stub_request(:any, 'example.com/test/stuff')
         get '/test/stuff'
+        a_request(:get, 'http://example.com/test/stuff').with(:headers => {"Host" => "example.com"}).should_not have_been_made
         a_request(:get, 'http://example.com/test/stuff').should have_been_made
       end
     end
