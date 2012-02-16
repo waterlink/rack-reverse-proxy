@@ -71,6 +71,21 @@ describe Rack::ReverseProxy do
       end
     end
 
+    describe "with x_forwarded_host turned on" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy_options :x_forwarded_host => true
+          reverse_proxy '/test', 'http://example.com/'
+        end
+      end
+
+      it "should optionally set the X-Forwarded-Host header to the proxying host" do
+        stub_request(:any, 'example.com/test/stuff')
+        get '/test/stuff'
+        a_request(:get, 'http://example.com/test/stuff').with(:headers => {'X-Forwarded-Host' => 'example.org'}).should have_been_made
+      end
+    end
+
     describe "with basic auth turned on" do
       def app
         Rack::ReverseProxy.new(dummy_app) do
