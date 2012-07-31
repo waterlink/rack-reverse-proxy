@@ -43,7 +43,7 @@ module Rack
           req = Net::HTTP.const_get(m.capitalize)
           has_body = req::REQUEST_HAS_BODY
         rescue
-          "method not supported: #{m}"
+          raise "method not supported: #{m}"
         end
         req = req.new(uri.request_uri, headers)
         req.basic_auth all_opts[:username], all_opts[:password] if all_opts[:username] and all_opts[:password]
