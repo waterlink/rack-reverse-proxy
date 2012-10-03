@@ -41,7 +41,7 @@ module Rack
         req = has_body = nil
         begin
           req = Net::HTTP.const_get(m.capitalize)
-          has_body = req::REQUEST_HAS_BODY
+          has_body = !(req.is_a?(Net::HTTP::Get) || req.is_a?(Net::HTTP::Trace))
         rescue
           raise "method not supported: #{m}"
         end
