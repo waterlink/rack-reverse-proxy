@@ -174,11 +174,9 @@ module Rack
 
     private
     def match_path(path)
-      if matcher.kind_of?(Regexp)
-        match = matcher.match(path)
-        @url = match.url unless url
-        match
-      end
+      match = matcher.match(path)
+      @url = match.url unless url
+      match
     end
   end
 end
