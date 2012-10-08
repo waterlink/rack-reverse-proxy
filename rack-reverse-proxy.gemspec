@@ -33,7 +33,6 @@ Gem::Specification.new do |s|
   ]
 
   s.add_development_dependency "rspec", "~> 1.3.2"
-  s.add_development_dependency "bundler", "~> 1.0.15"
   s.add_development_dependency "rake", "~> 0.8.7"
   s.add_development_dependency "rack-test", "~> 0.5.7"
   s.add_development_dependency "webmock", "~> 1.5.0"
