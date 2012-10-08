@@ -139,17 +139,20 @@ module Rack
   end
 
   class ReverseProxyMatcher
-    def initialize(matching,url,options)
+    def initialize(matcher,url=nil,options)
       @url=url
       @options=options
-      if matching.kind_of?(Regexp) || matching.respond_to?(:match_path)
-        @matching = matching
+
+      if matcher.kind_of?(String)
+        @matcher = /^#{matcher.to_s}/
+      elsif matcher.respond_to?(:match)
+        @matcher = matcher
       else
-        @matching = /^#{matching.to_s}/
+        raise "Invalid Matcher for reverse_proxy"
       end
     end
 
-    attr_reader :matching,:url,:options
+    attr_reader :matcher,:url,:options
 
     def match?(path)
       match_path(path) ? true : false
@@ -166,16 +169,15 @@ module Rack
     end
     
     def to_s
-      %Q("#{matching.to_s}" => "#{url}")
+      %Q("#{matcher.to_s}" => "#{url}")
     end
 
     private
     def match_path(path)
-      if matching.kind_of?(Regexp)
-        path.match(matching)
-      elsif matching.respond_to?(:match_path)
-        match = matching.match_path(path)
-        @url = match.url if match
+      if matcher.kind_of?(Regexp)
+        match = matcher.match(path)
+        @url = match.url unless url
+        match
       end
     end
   end
