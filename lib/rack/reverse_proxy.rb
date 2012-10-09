@@ -102,7 +102,7 @@ module Rack
       @global_options=options
     end
 
-    def reverse_proxy matcher, url, opts={}
+    def reverse_proxy matcher, url=nil, opts={}
       raise GenericProxyURI.new(url) if matcher.is_a?(String) && url.is_a?(String) && URI(url).class == URI::Generic
       @matchers << ReverseProxyMatcher.new(matcher,url,opts)
     end
@@ -139,14 +139,20 @@ module Rack
   end
 
   class ReverseProxyMatcher
-    def initialize(matching,url,options)
-      @matching=matching
+    def initialize(matcher,url=nil,options)
       @url=url
       @options=options
-      @matching_regexp= matching.kind_of?(Regexp) ? matching : /^#{matching.to_s}/
+
+      if matcher.kind_of?(String)
+        @matcher = /^#{matcher.to_s}/
+      elsif matcher.respond_to?(:match)
+        @matcher = matcher
+      else
+        raise "Invalid Matcher for reverse_proxy"
+      end
     end
 
-    attr_reader :matching,:matching_regexp,:url,:options
+    attr_reader :matcher,:url,:options
 
     def match?(path)
       match_path(path) ? true : false
@@ -161,14 +167,16 @@ module Rack
         URI.join(_url, path)
       end
     end
+    
     def to_s
-      %Q("#{matching.to_s}" => "#{url}")
+      %Q("#{matcher.to_s}" => "#{url}")
     end
+
     private
     def match_path(path)
-      path.match(matching_regexp)
+      match = matcher.match(path)
+      @url = match.url if match && url.nil?
+      match
     end
-
-
   end
 end

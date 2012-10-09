@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rack-reverse-proxy (0.4.1)
+    rack-reverse-proxy (0.4.4)
       rack (>= 1.0.0)
 
 GEM
@@ -22,7 +22,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bundler (~> 1.0.15)
   rack-reverse-proxy!
   rack-test (~> 0.5.7)
   rake (~> 0.8.7)
