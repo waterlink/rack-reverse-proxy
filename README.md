@@ -5,9 +5,11 @@ This is a simple reverse proxy for Rack that pretty heavily rips off Rack Forwar
 
 ## Installation
 The gem is available on gemcutter.  Assuming you have a recent version of Rubygems you should just be able to install it via:
+
     gem install rack-reverse-proxy
 
 For your Gemfile use:
+
     gem "rack-reverse-proxy", :require => "rack/reverse_proxy"
 
 ## Usage
@@ -18,23 +20,23 @@ Right now if more than one matcher matches any given route, it throws an excepti
 Below is an example for configuring the middleware:
 
 ```ruby
-  require 'rack/reverse_proxy'
+require 'rack/reverse_proxy'
 
-  use Rack::ReverseProxy do 
-    # Set :preserve_host to true globally (default is true already)
-    reverse_proxy_options :preserve_host => true
+use Rack::ReverseProxy do 
+  # Set :preserve_host to true globally (default is true already)
+  reverse_proxy_options :preserve_host => true
 
-    # Forward the path /test* to http://example.com/test*
-    reverse_proxy '/test', 'http://example.com/'
+  # Forward the path /test* to http://example.com/test*
+  reverse_proxy '/test', 'http://example.com/'
 
-    # Forward the path /foo/* to http://example.com/bar/*
-    reverse_proxy /^\/foo(\/.*)$/, 'http://example.com/bar$1', :username => 'name', :password => 'basic_auth_secret'
-  end
+  # Forward the path /foo/* to http://example.com/bar/*
+  reverse_proxy /^\/foo(\/.*)$/, 'http://example.com/bar$1', :username => 'name', :password => 'basic_auth_secret'
+end
 
-  app = proc do |env|
-    [ 200, {'Content-Type' => 'text/plain'}, "b" ]
-  end
-  run app
+app = proc do |env|
+  [ 200, {'Content-Type' => 'text/plain'}, "b" ]
+end
+run app
 ```
 
 reverse_proxy_options sets global options for all reverse proxies. Available options are:
