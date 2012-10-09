@@ -175,7 +175,7 @@ module Rack
     private
     def match_path(path)
       match = matcher.match(path)
-      @url = match.url unless url
+      @url = match.url if match && url.nil?
       match
     end
   end

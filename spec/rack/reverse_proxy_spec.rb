@@ -219,6 +219,38 @@ describe Rack::ReverseProxy do
         end
       end
     end
+
+    describe "with a matching class" do
+      class Matcher
+        def self.match(path)
+          if path.match(/^\/test/)
+            Matcher.new
+          end
+        end
+
+        def url
+          'http://example.com/'
+        end
+      end
+
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy Matcher
+        end
+      end
+
+      it "should forward requests to the calling app when the path is not matched" do
+        get '/'
+        last_response.body.should == "Dummy App"
+        last_response.should be_ok
+      end
+
+      it "should proxy requests when a pattern is matched" do
+        stub_request(:get, 'http://example.com/test').to_return({:body => "Proxied App"})
+        get '/test'
+        last_response.body.should == "Proxied App"
+      end
+    end
   end
 
   describe "as a rack app" do
