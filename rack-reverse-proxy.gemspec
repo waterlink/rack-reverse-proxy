@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
   s.files = [
     ".document",
     "LICENSE",
-    "README.rdoc",
+    "README.md",
     "Rakefile",
     "VERSION",
     "lib/rack/reverse_proxy.rb",
