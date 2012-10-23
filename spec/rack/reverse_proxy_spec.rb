@@ -228,7 +228,7 @@ describe Rack::ReverseProxy do
           end
         end
 
-        def url
+        def url(path)
           'http://example.com/'
         end
       end
