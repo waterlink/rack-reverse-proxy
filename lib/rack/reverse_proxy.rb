@@ -15,7 +15,7 @@ module Rack
     def call(env)
       rackreq = Rack::Request.new(env)
       if @global_options[:newrelic_instrumentation]
-        perform_action_with_newrelic_trace(:category => :rack, :request => rackreq) do
+        perform_action_with_newrelic_trace(:name => rackreq.path, :request => rackreq) do
           proxy(env,rackreq)
         end
       else
