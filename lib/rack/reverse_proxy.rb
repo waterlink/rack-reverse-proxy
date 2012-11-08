@@ -15,7 +15,8 @@ module Rack
     def call(env)
       rackreq = Rack::Request.new(env)
       if @global_options[:newrelic_instrumentation]
-        perform_action_with_newrelic_trace(:name => rackreq.path.gsub(/\/\d+$/, ''), :request => rackreq) do
+        action_name = "#{rackreq.path.gsub(/\/\d+$/,'').gsub(/^\//,'')}/#{rackreq.request_method}" # Rack::ReverseProxy/foo/bar#GET
+        perform_action_with_newrelic_trace(:name => action_name, :request => rackreq) do
           proxy(env,rackreq)
         end
       else
