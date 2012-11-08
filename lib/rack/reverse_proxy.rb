@@ -3,6 +3,8 @@ require 'net/https'
 
 module Rack
   class ReverseProxy
+    include NewRelic::Agent::Instrumentation::ControllerInstrumentation if defined? NewRelic
+
     def initialize(app = nil, &b)
       @app = app || lambda {|env| [404, [], []] }
       @matchers = []
@@ -12,6 +14,18 @@ module Rack
 
     def call(env)
       rackreq = Rack::Request.new(env)
+      if @global_options[:newrelic_instrumentation]
+        perform_action_with_newrelic_trace(:name => rackreq.path, :request => rackreq) do
+          proxy(env,rackreq)
+        end
+      else
+        proxy(env,rackreq)
+      end
+    end
+
+    private
+
+    def proxy(env, rackreq)
       matcher = get_matcher rackreq.fullpath
       return @app.call(env) if matcher.nil?
 
@@ -70,8 +84,6 @@ module Rack
         [res.code, create_response_headers(res), [body]]
       }
     end
-
-    private
 
     def get_matcher path
       matches = @matchers.select do |matcher|
