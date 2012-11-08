@@ -14,22 +14,22 @@ module Rack
 
     def call(env)
       rackreq = Rack::Request.new(env)
+      matcher = get_matcher rackreq.fullpath
+      return @app.call(env) if matcher.nil?
+
       if @global_options[:newrelic_instrumentation]
         action_name = "#{rackreq.path.gsub(/\/\d+$/,'').gsub(/^\//,'')}/#{rackreq.request_method}" # Rack::ReverseProxy/foo/bar#GET
         perform_action_with_newrelic_trace(:name => action_name, :request => rackreq) do
-          proxy(env,rackreq)
+          proxy(env, rackreq, matcher)
         end
       else
-        proxy(env,rackreq)
+        proxy(env, rackreq, matcher)
       end
     end
 
     private
 
-    def proxy(env, rackreq)
-      matcher = get_matcher rackreq.fullpath
-      return @app.call(env) if matcher.nil?
-
+    def proxy(env, rackreq, matcher)
       uri = matcher.get_uri(rackreq.fullpath,env)
       all_opts = @global_options.dup.merge(matcher.options)
       headers = Rack::Utils::HeaderHash.new
