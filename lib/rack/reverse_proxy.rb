@@ -19,14 +19,14 @@ module Rack
       matcher = get_matcher rackreq.fullpath
       return @app.call(env) if matcher.nil?
 
-      if @global_options[:newrelic_instrumentation]
-        action_name = "#{rackreq.path.gsub(/\/\d+/,'/:id').gsub(/^\//,'')}/#{rackreq.request_method}" # Rack::ReverseProxy/foo/bar#GET
-        perform_action_with_newrelic_trace(:name => action_name, :request => rackreq) do
-          perform_request(env, rackreq, matcher)
-        end
-      else
+      # if @global_options[:newrelic_instrumentation]
+      #   action_name = "#{rackreq.path.gsub(/\/\d+/,'/:id').gsub(/^\//,'')}/#{rackreq.request_method}" # Rack::ReverseProxy/foo/bar#GET
+      #   perform_action_with_newrelic_trace(:name => action_name, :request => rackreq) do
+      #     perform_request(env, rackreq, matcher)
+      #   end
+      # else
         perform_request(env, rackreq, matcher)
-      end
+      # end
     end
 
     private
@@ -35,7 +35,7 @@ module Rack
       uri = matcher.get_uri(source_request.fullpath,env)
       
       # Initialize request
-      target_request = Net::HTTP.const_get(source_request.request_method.capitalize).new(uri.to_s)
+      target_request = Net::HTTP.const_get(source_request.request_method.capitalize).new(source_request.fullpath)
 
       # Setup headers
       target_request.initialize_http_header(extract_http_request_headers(source_request.env))
@@ -48,11 +48,19 @@ module Rack
       end
       
       # Create a streaming response (the actual network communication is deferred, a.k.a. streamed)
-      target_response = HttpStreamingResponse.new(target_request, uri.host, uri.port)
+      # target_response = HttpStreamingResponse.new(target_request, uri.host, uri.port)
 
-      target_response.use_ssl = "https" == uri.scheme
+      # target_response.use_ssl = "https" == uri.scheme
+
+      http = Net::HTTP.new(uri.host, uri.port) 
+      target_response = http.request(target_request)
       
-      [target_response.status, target_response.headers, target_response.body]
+      h = Utils::HeaderHash.new
+      target_response.each_header do |k, v|
+        h[k] = v
+      end
+      
+      [target_response.code.to_i, h, target_response]
     end
 
     def extract_http_request_headers(env)
