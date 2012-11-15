@@ -1,5 +1,7 @@
 require 'net/http'
 require 'net/https'
+require "net_http_hacked"
+require "rack/http_streaming_response"
 
 module Rack
   class ReverseProxy
@@ -20,71 +22,61 @@ module Rack
       if @global_options[:newrelic_instrumentation]
         action_name = "#{rackreq.path.gsub(/\/\d+/,'/:id').gsub(/^\//,'')}/#{rackreq.request_method}" # Rack::ReverseProxy/foo/bar#GET
         perform_action_with_newrelic_trace(:name => action_name, :request => rackreq) do
-          proxy(env, rackreq, matcher)
+          perform_request(env, rackreq, matcher)
         end
       else
-        proxy(env, rackreq, matcher)
+        perform_request(env, rackreq, matcher)
       end
     end
 
     private
 
-    def proxy(env, rackreq, matcher)
-      uri = matcher.get_uri(rackreq.fullpath,env)
-      all_opts = @global_options.dup.merge(matcher.options)
-      headers = Rack::Utils::HeaderHash.new
-      env.each { |key, value|
-        if key =~ /HTTP_(.*)/
-          headers[$1.gsub('_','-')] = value
-        end
-      }
-      headers['HOST'] = uri.host if all_opts[:preserve_host]
-      headers['X-Forwarded-Host'] = rackreq.host if all_opts[:x_forwarded_host]
+    def perform_request(env, source_request, matcher)
+      uri = matcher.get_uri(source_request.fullpath,env)
+      
+      # Initialize request
+      target_request = Net::HTTP.const_get(source_request.request_method.capitalize).new(uri.to_s)
 
-      session = Net::HTTP.new(uri.host, uri.port)
-      session.read_timeout=all_opts[:timeout] if all_opts[:timeout]
+      # Setup headers
+      target_request.initialize_http_header(extract_http_request_headers(source_request.env))
 
-      session.use_ssl = (uri.scheme == 'https')
-      if uri.scheme == 'https' && all_opts[:verify_ssl]
-        session.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      else
-        # DO NOT DO THIS IN PRODUCTION !!!
-        session.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      # Setup body
+      if target_request.request_body_permitted? && source_request.body
+        target_request.body_stream    = source_request.body
+        target_request.content_length = source_request.content_length
+        target_request.content_type   = source_request.content_type if source_request.content_type
       end
-      session.start { |http|
-        m = rackreq.request_method
-        req = has_body = nil
-        begin
-          req = Net::HTTP.const_get(m.capitalize)
-          has_body = !(req.is_a?(Net::HTTP::Get) || req.is_a?(Net::HTTP::Trace))
-        rescue
-          raise "method not supported: #{m}"
-        end
-        req = req.new(uri.request_uri, headers)
-        req.basic_auth all_opts[:username], all_opts[:password] if all_opts[:username] and all_opts[:password]
+      
+      # Create a streaming response (the actual network communication is deferred, a.k.a. streamed)
+      target_response = HttpStreamingResponse.new(target_request, uri.host, uri.port)
 
-        if has_body
-          if rackreq.body.respond_to?(:read) && rackreq.body.respond_to?(:rewind)
-            body = rackreq.body.read
-            req.content_length = body.size
-            rackreq.body.rewind
-          else
-            req.content_length = rackreq.body.size
-          end
-          req.content_type = rackreq.content_type unless rackreq.content_type.nil?
-          req.body_stream = rackreq.body
-        end
-
-        body = ''
-        res = http.request(req) do |res|
-          res.read_body do |segment|
-            body << segment
-          end
-        end
-
-        [res.code, create_response_headers(res), [body]]
-      }
+      target_response.use_ssl = "https" == uri.scheme
+      
+      [target_response.status, target_response.headers, target_response.body]
     end
+
+    def extract_http_request_headers(env)
+      headers = env.reject do |k, v|
+        !(/^HTTP_[A-Z_]+$/ === k) || v.nil?
+      end.map do |k, v|
+        [reconstruct_header_name(k), v]
+      end.inject(Utils::HeaderHash.new) do |hash, k_v|
+        k, v = k_v
+        hash[k] = v
+        hash
+      end
+
+      x_forwarded_for = (headers["X-Forwarded-For"].to_s.split(/, +/) << env["REMOTE_ADDR"]).join(", ")
+
+      headers.merge!("X-Forwarded-For" =>  x_forwarded_for)
+    end
+
+    def reconstruct_header_name(name)
+      name.sub(/^HTTP_/, "").gsub("_", "-")
+    end
+
+
+
 
     def get_matcher path
       matches = @matchers.select do |matcher|
