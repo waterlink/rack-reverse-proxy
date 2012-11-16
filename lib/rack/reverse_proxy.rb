@@ -1,5 +1,8 @@
 require 'net/http'
 require 'net/https'
+require "rack-proxy"
+require "rack/reverse_proxy_matcher"
+require "rack/exception"
 
 module Rack
   class ReverseProxy
@@ -29,61 +32,58 @@ module Rack
 
     private
 
-    def proxy(env, rackreq, matcher)
-      uri = matcher.get_uri(rackreq.fullpath,env)
-      all_opts = @global_options.dup.merge(matcher.options)
-      headers = Rack::Utils::HeaderHash.new
-      env.each { |key, value|
-        if key =~ /HTTP_(.*)/
-          headers[$1.gsub('_','-')] = value
-        end
-      }
-      headers['HOST'] = uri.host if all_opts[:preserve_host]
-      headers['X-Forwarded-Host'] = rackreq.host if all_opts[:x_forwarded_host]
+    def proxy(env, source_request, matcher)
+      uri = matcher.get_uri(source_request.fullpath,env)
+      options = @global_options.dup.merge(matcher.options)
+      
+      # Initialize request
+      target_request = Net::HTTP.const_get(source_request.request_method.capitalize).new(source_request.fullpath)
 
-      session = Net::HTTP.new(uri.host, uri.port)
-      session.read_timeout=all_opts[:timeout] if all_opts[:timeout]
+      # Setup headers
+      target_request_headers = extract_http_request_headers(source_request.env)
+      target_request_headers['HOST'] = uri.host if options[:preserve_host]
+      target_request_headers['X-Forwarded-Host'] = source_request.host if options[:x_forwarded_host]
+      target_request.initialize_http_header(target_request_headers)
 
-      session.use_ssl = (uri.scheme == 'https')
-      if uri.scheme == 'https' && all_opts[:verify_ssl]
-        session.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      else
-        # DO NOT DO THIS IN PRODUCTION !!!
-        session.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      # Basic auth
+      target_request.basic_auth options[:username], options[:password] if options[:username] and options[:password]
+
+      # Setup body
+      if target_request.request_body_permitted? && source_request.body
+        source_request.body.rewind
+        target_request.body_stream    = source_request.body
+        target_request.content_length = source_request.content_length
+        target_request.content_type   = source_request.content_type if source_request.content_type
       end
-      session.start { |http|
-        m = rackreq.request_method
-        req = has_body = nil
-        begin
-          req = Net::HTTP.const_get(m.capitalize)
-          has_body = !(req.is_a?(Net::HTTP::Get) || req.is_a?(Net::HTTP::Trace))
-        rescue
-          raise "method not supported: #{m}"
-        end
-        req = req.new(uri.request_uri, headers)
-        req.basic_auth all_opts[:username], all_opts[:password] if all_opts[:username] and all_opts[:password]
+      
+      # Create a streaming response (the actual network communication is deferred, a.k.a. streamed)
+      target_response = HttpStreamingResponse.new(target_request, uri.host, uri.port)
 
-        if has_body
-          if rackreq.body.respond_to?(:read) && rackreq.body.respond_to?(:rewind)
-            body = rackreq.body.read
-            req.content_length = body.size
-            rackreq.body.rewind
-          else
-            req.content_length = rackreq.body.size
-          end
-          req.content_type = rackreq.content_type unless rackreq.content_type.nil?
-          req.body_stream = rackreq.body
-        end
+      target_response.use_ssl = "https" == uri.scheme
+      target_response.verify_ssl = options[:verify_ssl]
+      target_response.timeout = options[:timeout]
 
-        body = ''
-        res = http.request(req) do |res|
-          res.read_body do |segment|
-            body << segment
-          end
-        end
+      [target_response.status, target_response.headers, target_response.body]
+    end
 
-        [res.code, create_response_headers(res), [body]]
-      }
+    def extract_http_request_headers(env)
+      headers = env.reject do |k, v|
+        !(/^HTTP_[A-Z_]+$/ === k) || v.nil?
+      end.map do |k, v|
+        [reconstruct_header_name(k), v]
+      end.inject(Utils::HeaderHash.new) do |hash, k_v|
+        k, v = k_v
+        hash[k] = v
+        hash
+      end
+
+      x_forwarded_for = (headers["X-Forwarded-For"].to_s.split(/, +/) << env["REMOTE_ADDR"]).join(", ")
+
+      headers.merge!("X-Forwarded-For" =>  x_forwarded_for)
+    end
+
+    def reconstruct_header_name(name)
+      name.sub(/^HTTP_/, "").gsub("_", "-")
     end
 
     def get_matcher path
@@ -118,78 +118,6 @@ module Rack
     def reverse_proxy matcher, url=nil, opts={}
       raise GenericProxyURI.new(url) if matcher.is_a?(String) && url.is_a?(String) && URI(url).class == URI::Generic
       @matchers << ReverseProxyMatcher.new(matcher,url,opts)
-    end
-  end
-
-  class GenericProxyURI < Exception
-    attr_reader :url
-
-    def intialize(url)
-      @url = url
-    end
-
-    def to_s
-      %Q(Your URL "#{@url}" is too generic. Did you mean "http://#{@url}"?)
-    end
-  end
-
-  class AmbiguousProxyMatch < Exception
-    attr_reader :path, :matches
-    def initialize(path, matches)
-      @path = path
-      @matches = matches
-    end
-
-    def to_s
-      %Q(Path "#{path}" matched multiple endpoints: #{formatted_matches})
-    end
-
-    private
-
-    def formatted_matches
-      matches.map {|matcher| matcher.to_s}.join(', ')
-    end
-  end
-
-  class ReverseProxyMatcher
-    def initialize(matcher,url=nil,options)
-      @url=url
-      @options=options
-
-      if matcher.kind_of?(String)
-        @matcher = /^#{matcher.to_s}/
-      elsif matcher.respond_to?(:match)
-        @matcher = matcher
-      else
-        raise "Invalid Matcher for reverse_proxy"
-      end
-    end
-
-    attr_reader :matcher,:url,:options
-
-    def match?(path)
-      match_path(path) ? true : false
-    end
-
-    def get_uri(path,env)
-      _url=(url.respond_to?(:call) ? url.call(env) : url.clone)
-      if _url =~/\$\d/
-        match_path(path).to_a.each_with_index { |m, i| _url.gsub!("$#{i.to_s}", m) }
-        URI(_url)
-      else
-        _url.include?(path) ? URI.parse(_url) : URI.join(_url, path)
-      end
-    end
-    
-    def to_s
-      %Q("#{matcher.to_s}" => "#{url}")
-    end
-
-    private
-    def match_path(path)
-      match = matcher.match(path)
-      @url = match.url(path) if match && url.nil?
-      match
     end
   end
 end

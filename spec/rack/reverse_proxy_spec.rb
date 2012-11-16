@@ -38,18 +38,6 @@ describe Rack::ReverseProxy do
       last_response.body.should == "Proxied App2"
     end
 
-    it "the response header should never contain Status" do
-      stub_request(:any, 'example.com/test/stuff').to_return(:headers => {'Status' => '200 OK'})
-      get '/test/stuff'
-      last_response.headers['Status'].should == nil
-    end
-
-    it "the response header should never transfer-encoding" do
-      stub_request(:any, 'example.com/test/stuff').to_return(:headers => {'transfer-encoding' => 'Chunked'})
-      get '/test/stuff'
-      last_response.headers['transfer-encoding'].should == nil
-    end
-
     it "should set the Host header" do
       stub_request(:any, 'example.com/test/stuff')
       get '/test/stuff'
@@ -145,7 +133,7 @@ describe Rack::ReverseProxy do
       end
 
       it "should support subcaptures" do
-        stub_request(:get, 'http://example.com/path').to_return({:body => "Proxied App"})
+        stub_request(:get, 'http://example.com/test/path').to_return({:body => "Proxied App"})
         get '/test/path'
         last_response.body.should == "Proxied App"
       end
