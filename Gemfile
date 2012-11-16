@@ -2,4 +2,4 @@ source "https://rubygems.org"
 
 gemspec
 
-gem "rack-proxy", :git => 'git@github.com:tstmedia/rack-proxy.git'
+gem "rack-proxy", :git => 'https://github.com/tstmedia/rack-proxy.git'

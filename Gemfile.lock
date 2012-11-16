@@ -1,5 +1,5 @@
 GIT
-  remote: git@github.com:tstmedia/rack-proxy.git
+  remote: https://github.com/tstmedia/rack-proxy.git
   revision: 2fc15874a150a847c5213104b3d7185f8a0492f0
   specs:
     rack-proxy (0.3.7)
