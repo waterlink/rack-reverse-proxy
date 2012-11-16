@@ -1,7 +1,7 @@
 require 'net/http'
 require 'net/https'
 require "net_http_hacked"
-require "rack/http_streaming_response"
+require "rack-proxy"
 require "rack/reverse_proxy_matcher"
 require "rack/exception"
 

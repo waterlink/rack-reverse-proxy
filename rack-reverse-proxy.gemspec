@@ -37,6 +37,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rack-test", "~> 0.5.7"
   s.add_development_dependency "webmock", "~> 1.5.0"
   s.add_dependency "rack", ">= 1.0.0"
-  s.add_dependency "rack-proxy"
 end
 

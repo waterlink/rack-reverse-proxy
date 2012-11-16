@@ -1,3 +1,5 @@
-source "http://rubygems.org"
+source "https://rubygems.org"
 
 gemspec
+
+gem "rack-proxy", :git => 'git@github.com:tstmedia/rack-proxy.git'
