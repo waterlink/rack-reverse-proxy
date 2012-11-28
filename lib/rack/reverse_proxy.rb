@@ -63,7 +63,11 @@ module Rack
       target_response.verify_ssl = options[:verify_ssl]
       target_response.timeout = options[:timeout]
 
-      [target_response.status, target_response.headers, target_response.body]
+      # Let rack set the transfer-encoding header
+      response_headers = target_response.headers
+      response_headers.delete('transfer-encoding')
+
+      [target_response.status, response_headers, target_response.body]
     end
 
     def extract_http_request_headers(env)
