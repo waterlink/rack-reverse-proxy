@@ -35,7 +35,11 @@ module Rack
 
     private
     def match_path(path, headers=nil)
-      match = matcher.match(path, headers)
+      if matcher.class.respond_to?(:accept_headers) && matcher.class.accept_headers
+        match = matcher.match(path, headers)
+      else
+        match = matcher.match(path)
+      end
       @url = match.url(path) if match && url.nil?
       match
     end
