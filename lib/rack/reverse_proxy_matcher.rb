@@ -15,8 +15,8 @@ module Rack
 
     attr_reader :matcher,:url,:options
 
-    def match?(path)
-      match_path(path) ? true : false
+    def match?(path, headers)
+      match_path(path, headers) ? true : false
     end
 
     def get_uri(path,env)
@@ -34,8 +34,8 @@ module Rack
     end
 
     private
-    def match_path(path)
-      match = matcher.match(path)
+    def match_path(path, headers=nil)
+      match = matcher.match(path, headers)
       @url = match.url(path) if match && url.nil?
       match
     end

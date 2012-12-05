@@ -17,7 +17,7 @@ module Rack
 
     def call(env)
       rackreq = Rack::Request.new(env)
-      matcher = get_matcher rackreq.fullpath
+      matcher = get_matcher(rackreq.fullpath, extract_http_request_headers(rackreq.env))
       return @app.call(env) if matcher.nil?
 
       if @global_options[:newrelic_instrumentation]
@@ -90,9 +90,9 @@ module Rack
       name.sub(/^HTTP_/, "").gsub("_", "-")
     end
 
-    def get_matcher path
+    def get_matcher path, headers
       matches = @matchers.select do |matcher|
-        matcher.match?(path)
+        matcher.match?(path, headers)
       end
 
       if matches.length < 1
