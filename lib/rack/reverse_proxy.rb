@@ -17,7 +17,7 @@ module Rack
 
     def call(env)
       rackreq = Rack::Request.new(env)
-      matcher = get_matcher rackreq.fullpath
+      matcher = get_matcher(rackreq.fullpath, extract_http_request_headers(rackreq.env))
       return @app.call(env) if matcher.nil?
 
       if @global_options[:newrelic_instrumentation]
@@ -90,9 +90,9 @@ module Rack
       name.sub(/^HTTP_/, "").gsub("_", "-")
     end
 
-    def get_matcher path
+    def get_matcher(path, headers)
       matches = @matchers.select do |matcher|
-        matcher.match?(path)
+        matcher.match?(path, headers)
       end
 
       if matches.length < 1
@@ -104,7 +104,7 @@ module Rack
       end
     end
 
-    def create_response_headers http_response
+    def create_response_headers(http_response)
       response_headers = Rack::Utils::HeaderHash.new(http_response)
       # handled by Rack
       response_headers.delete('status')
@@ -119,7 +119,7 @@ module Rack
       @global_options=options
     end
 
-    def reverse_proxy matcher, url=nil, opts={}
+    def reverse_proxy(matcher, url=nil, opts={})
       raise GenericProxyURI.new(url) if matcher.is_a?(String) && url.is_a?(String) && URI(url).class == URI::Generic
       @matchers << ReverseProxyMatcher.new(matcher,url,opts)
     end

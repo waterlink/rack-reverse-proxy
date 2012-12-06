@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = %q{rack-reverse-proxy}
-  s.version = "0.5.0"
+  s.version = "0.6.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Jon Swope"]
@@ -25,7 +25,7 @@ Gem::Specification.new do |s|
   ]
   s.homepage = %q{http://github.com/jaswope/rack-reverse-proxy}
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.7}
+  s.rubygems_version = %q{1.8.24}
   s.summary = %q{A Simple Reverse Proxy for Rack}
   s.test_files = [
     "spec/rack/reverse_proxy_spec.rb",
