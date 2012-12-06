@@ -239,6 +239,38 @@ describe Rack::ReverseProxy do
         last_response.body.should == "Proxied App"
       end
     end
+
+    describe "with a matching class that accepts headers" do
+      class MatcherHeaders
+        def self.match(path, headers)
+          if path.match(/^\/test/) && headers['ACCEPT'] && headers['ACCEPT'] == 'foo.bar'
+            MatcherHeaders.new
+          end
+        end
+
+        def url(path)
+          'http://example.com/'
+        end
+      end
+
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy MatcherHeaders, nil, {:accept_headers => true}
+        end
+      end
+
+      it "should proxy requests when a pattern is matched and correct headers are passed" do
+        stub_request(:get, 'http://example.com/test').to_return({:body => "Proxied App with Headers"})
+        get '/test', {}, {'HTTP_ACCEPT' => 'foo.bar'}
+        last_response.body.should == "Proxied App with Headers"
+      end
+
+      it "should not proxy requests when a pattern is matched and incorrect headers are passed" do
+        stub_request(:get, 'http://example.com/test').to_return({:body => "Proxied App with Headers"})
+        get '/test', {}, {'HTTP_ACCEPT' => 'foo.bar'}
+        last_response.body.should == "Proxied App with Headers"
+      end
+    end
   end
 
   describe "as a rack app" do
