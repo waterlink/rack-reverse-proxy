@@ -267,8 +267,8 @@ describe Rack::ReverseProxy do
 
       it "should not proxy requests when a pattern is matched and incorrect headers are passed" do
         stub_request(:get, 'http://example.com/test').to_return({:body => "Proxied App with Headers"})
-        get '/test', {}, {'HTTP_ACCEPT' => 'foo.bar'}
-        last_response.body.should == "Proxied App with Headers"
+        get '/test', {}, {'HTTP_ACCEPT' => 'bar.foo'}
+        last_response.body.should_not == "Proxied App with Headers"
       end
     end
   end
