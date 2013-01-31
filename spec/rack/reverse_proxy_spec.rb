@@ -211,13 +211,17 @@ describe Rack::ReverseProxy do
     describe "with a matching class" do
       class Matcher
         def self.match(path)
-          if path.match(/^\/test/)
+          if path.match(/^\/(test|users)/)
             Matcher.new
           end
         end
 
         def url(path)
-          'http://example.com/'
+          if path.include?("user")
+            'http://users-example.com/'
+          else
+            'http://example.com/'
+          end
         end
       end
 
@@ -235,8 +239,11 @@ describe Rack::ReverseProxy do
 
       it "should proxy requests when a pattern is matched" do
         stub_request(:get, 'http://example.com/test').to_return({:body => "Proxied App"})
+        stub_request(:get, 'http://users-example.com/users').to_return({:body => "User App"})
         get '/test'
         last_response.body.should == "Proxied App"
+        get '/users'
+        last_response.body.should == "User App"
       end
     end
 
