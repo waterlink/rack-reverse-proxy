@@ -1,6 +1,7 @@
 module Rack
   class ReverseProxyMatcher
     def initialize(matcher,url=nil,options)
+      @default_url=url
       @url=url
       @options=options
 
@@ -13,7 +14,7 @@ module Rack
       end
     end
 
-    attr_reader :matcher,:url,:options
+    attr_reader :matcher,:url, :default_url,:options
 
     def match?(path, headers)
       match_path(path, headers) ? true : false
@@ -40,7 +41,7 @@ module Rack
       else
         match = matcher.match(path)
       end
-      @url = match.url(path) if match && url.nil?
+      @url = match.url(path) if match && default_url.nil?
       match
     end
   end
