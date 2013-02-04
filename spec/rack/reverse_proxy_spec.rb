@@ -95,6 +95,21 @@ describe Rack::ReverseProxy do
       end
     end
 
+    describe "with preserve response host turned on" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy '/test', 'http://example.com/', {:replace_response_host => true}
+        end
+      end
+
+      it "should replace the location response header" do
+        stub_request(:get, "http://example.com/test/stuff").to_return(:headers => {"location" => "http://test.com/bar"})
+        get '/test/stuff'
+        # puts last_response.headers.inspect
+        last_response.headers['location'].should == "http://example.com/bar"
+      end
+    end
+
     describe "with ambiguous routes and all matching" do
       def app
         Rack::ReverseProxy.new(dummy_app) do
