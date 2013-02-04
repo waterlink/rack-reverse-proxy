@@ -11,7 +11,7 @@ module Rack
     def initialize(app = nil, &b)
       @app = app || lambda {|env| [404, [], []] }
       @matchers = []
-      @global_options = {:preserve_host => true, :x_forwarded_host => true, :matching => :all, :verify_ssl => true}
+      @global_options = {:preserve_host => true, :x_forwarded_host => true, :matching => :all, :verify_ssl => true, :replace_response_host => false}
       instance_eval &b if block_given?
     end
 
@@ -35,7 +35,7 @@ module Rack
     def proxy(env, source_request, matcher)
       uri = matcher.get_uri(source_request.fullpath,env)
       options = @global_options.dup.merge(matcher.options)
-      
+
       # Initialize request
       target_request = Net::HTTP.const_get(source_request.request_method.capitalize).new(source_request.fullpath)
 
@@ -55,7 +55,7 @@ module Rack
         target_request.content_length = source_request.content_length
         target_request.content_type   = source_request.content_type if source_request.content_type
       end
-      
+
       # Create a streaming response (the actual network communication is deferred, a.k.a. streamed)
       target_response = HttpStreamingResponse.new(target_request, uri.host, uri.port)
 
@@ -66,6 +66,13 @@ module Rack
       # Let rack set the transfer-encoding header
       response_headers = target_response.headers
       response_headers.delete('transfer-encoding')
+
+      # Replace the location header with the proxy domain
+      if response_headers['location'] && options[:replace_response_host]
+        response_location = URI(response_headers['location'])
+        response_location.host = uri.host
+        response_headers['location'] = response_location.to_s
+      end
 
       [target_response.status, response_headers, target_response.body]
     end
@@ -103,17 +110,6 @@ module Rack
         matches.first
       end
     end
-
-    def create_response_headers(http_response)
-      response_headers = Rack::Utils::HeaderHash.new(http_response)
-      # handled by Rack
-      response_headers.delete('status')
-      # TODO: figure out how to handle chunked responses
-      response_headers.delete('transfer-encoding')
-      # TODO: Verify Content Length, and required Rack headers
-      response_headers
-    end
-
 
     def reverse_proxy_options(options)
       @global_options=options
