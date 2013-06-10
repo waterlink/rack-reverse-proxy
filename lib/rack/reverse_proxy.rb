@@ -37,7 +37,7 @@ module Rack
       options = @global_options.dup.merge(matcher.options)
 
       # Initialize request
-      target_request = Net::HTTP.const_get(source_request.request_method.capitalize).new(source_request.fullpath)
+      target_request = Net::HTTP.const_get(source_request.request_method.capitalize).new(uri.request_uri)
 
       # Setup headers
       target_request_headers = extract_http_request_headers(source_request.env)

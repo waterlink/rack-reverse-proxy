@@ -148,7 +148,7 @@ describe Rack::ReverseProxy do
       end
 
       it "should support subcaptures" do
-        stub_request(:get, 'http://example.com/test/path').to_return({:body => "Proxied App"})
+        stub_request(:get, 'http://example.com/path').to_return({:body => "Proxied App"})
         get '/test/path'
         last_response.body.should == "Proxied App"
       end
@@ -233,9 +233,9 @@ describe Rack::ReverseProxy do
 
         def url(path)
           if path.include?("user")
-            'http://users-example.com/'
+            'http://users-example.com' + path
           else
-            'http://example.com/'
+            'http://example.com' + path
           end
         end
       end
@@ -271,7 +271,7 @@ describe Rack::ReverseProxy do
         end
 
         def url(path)
-          'http://example.com/'
+          'http://example.com' + path
         end
       end
 
