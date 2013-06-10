@@ -26,10 +26,10 @@ module Rack
         match_path(path).to_a.each_with_index { |m, i| _url.gsub!("$#{i.to_s}", m) }
         URI(_url)
       else
-        _url.include?(path) ? URI.parse(_url) : URI.join(_url, path)
+        default_url.nil? ? URI.parse(_url) : URI.join(_url, path)
       end
     end
-    
+
     def to_s
       %Q("#{matcher.to_s}" => "#{url}")
     end
