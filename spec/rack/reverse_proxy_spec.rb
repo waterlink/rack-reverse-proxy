@@ -279,8 +279,6 @@ describe Rack::ReverseProxy do
         def url(path)
           if rackreq.params["user"] == 'omer'
             'http://users-example.com' + path
-          else
-            'http://example.com' + path
           end
         end
       end
@@ -298,10 +296,9 @@ describe Rack::ReverseProxy do
       end
 
       it "should proxy requests when a pattern is matched" do
-        stub_request(:get, 'http://example.com/test?user=mark').to_return({:body => "Proxied App"})
         stub_request(:get, 'http://users-example.com/users?user=omer').to_return({:body => "User App"})
         get '/test', user: "mark"
-        last_response.body.should == "Proxied App"
+        last_response.body.should == "Dummy App"
         get '/users', user: 'omer'
         last_response.body.should == "User App"
       end

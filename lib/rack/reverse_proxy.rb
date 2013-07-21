@@ -34,6 +34,9 @@ module Rack
 
     def proxy(env, source_request, matcher)
       uri = matcher.get_uri(source_request.fullpath,env)
+      if uri.nil?
+        return @app.call(env)
+      end
       options = @global_options.dup.merge(matcher.options)
 
       # Initialize request
