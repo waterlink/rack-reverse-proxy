@@ -262,6 +262,52 @@ describe Rack::ReverseProxy do
       end
     end
 
+    describe "with a matching class" do
+      class RequestMatcher
+        attr_accessor :rackreq
+
+        def initialize(rackreq)
+          self.rackreq = rackreq
+        end
+
+        def self.match(path, headers, rackreq)
+          if path.match(/^\/(test|users)/)
+            RequestMatcher.new(rackreq)
+          end
+        end
+
+        def url(path)
+          if rackreq.params["user"] == 'omer'
+            'http://users-example.com' + path
+          else
+            'http://example.com' + path
+          end
+        end
+      end
+
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy RequestMatcher
+        end
+      end
+
+      it "should forward requests to the calling app when the path is not matched" do
+        get '/'
+        last_response.body.should == "Dummy App"
+        last_response.should be_ok
+      end
+
+      it "should proxy requests when a pattern is matched" do
+        stub_request(:get, 'http://example.com/test?user=mark').to_return({:body => "Proxied App"})
+        stub_request(:get, 'http://users-example.com/users?user=omer').to_return({:body => "User App"})
+        get '/test', user: "mark"
+        last_response.body.should == "Proxied App"
+        get '/users', user: 'omer'
+        last_response.body.should == "User App"
+      end
+    end
+
+
     describe "with a matching class that accepts headers" do
       class MatcherHeaders
         def self.match(path, headers)
