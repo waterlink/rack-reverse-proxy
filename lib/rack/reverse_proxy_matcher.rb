@@ -16,11 +16,12 @@ module Rack
 
     attr_reader :matcher,:url, :default_url,:options
 
-    def match?(path, headers)
-      match_path(path, headers) ? true : false
+    def match?(path, *args)
+      match_path(path, *args) ? true : false
     end
 
     def get_uri(path,env)
+      return nil if url.nil?
       _url=(url.respond_to?(:call) ? url.call(env) : url.clone)
       if _url =~/\$\d/
         match_path(path).to_a.each_with_index { |m, i| _url.gsub!("$#{i.to_s}", m) }
@@ -35,11 +36,15 @@ module Rack
     end
 
     private
-    def match_path(path, headers=nil)
-      if @options[:accept_headers]
-        match = matcher.match(path, headers)
-      else
+    def match_path(path, *args)
+      headers = args[0]
+      rackreq = args[1]
+      arity = matcher.method(:match).arity
+      if arity == -1
         match = matcher.match(path)
+      else
+        params = [path, (@options[:accept_headers] ? headers : nil), rackreq]
+        match = matcher.match(*params[0..(arity - 1)])
       end
       @url = match.url(path) if match && default_url.nil?
       match
