@@ -11,7 +11,7 @@ module Rack
     def initialize(app = nil, &b)
       @app = app || lambda {|env| [404, [], []] }
       @matchers = []
-      @global_options = {:preserve_host => true, :x_forwarded_host => true, :matching => :all, :verify_ssl => true, :replace_response_host => false}
+      @global_options = {:preserve_host => true, :x_forwarded_host => true, :matching => :all, :replace_response_host => false}
       instance_eval &b if block_given?
     end
 
@@ -63,8 +63,6 @@ module Rack
       target_response = HttpStreamingResponse.new(target_request, uri.host, uri.port)
 
       target_response.use_ssl = "https" == uri.scheme
-      target_response.verify_ssl = options[:verify_ssl]
-      target_response.timeout = options[:timeout]
 
       # Let rack set the transfer-encoding header
       response_headers = target_response.headers
