@@ -44,7 +44,12 @@ module Rack
 
       # Setup headers
       target_request_headers = extract_http_request_headers(source_request.env)
-      target_request_headers['HOST'] = uri.host if options[:preserve_host]
+      
+      if options[:preserve_host]
+        target_request_headers['HOST'] = uri.host
+        target_request_headers['PORT'] = uri.port unless uri.port == 80
+      end
+      
       target_request_headers['X-Forwarded-Host'] = source_request.host if options[:x_forwarded_host]
       target_request.initialize_http_header(target_request_headers)
 
