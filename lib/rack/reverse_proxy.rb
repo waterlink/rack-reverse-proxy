@@ -44,13 +44,16 @@ module Rack
 
       # Setup headers
       target_request_headers = extract_http_request_headers(source_request.env)
-      
+
       if options[:preserve_host]
-        target_request_headers['HOST'] = uri.host
-        target_request_headers['PORT'] = uri.port.to_s unless uri.port.to_s == 80.to_s
+        target_request_headers['HOST'] = "#{uri.host}:#{uri.port}"
       end
-      
-      target_request_headers['X-Forwarded-Host'] = source_request.host if options[:x_forwarded_host]
+
+      if options[:x_forwarded_host]
+        target_request_headers['X-Forwarded-Host'] = source_request.host
+        target_request_headers['X-Forwarded-Port'] = "#{source_request.port}"
+      end
+
       target_request.initialize_http_header(target_request_headers)
 
       # Basic auth
