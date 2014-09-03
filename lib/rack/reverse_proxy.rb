@@ -47,7 +47,7 @@ module Rack
       
       if options[:preserve_host]
         target_request_headers['HOST'] = uri.host
-        target_request_headers['PORT'] = uri.port unless uri.port == 80
+        target_request_headers['PORT'] = uri.port.to_s unless uri.port.to_s == 80.to_s
       end
       
       target_request_headers['X-Forwarded-Host'] = source_request.host if options[:x_forwarded_host]
