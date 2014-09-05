@@ -63,9 +63,10 @@ module Rack
       if target_request.request_body_permitted? && source_request.body
         source_request.body.rewind
         target_request.body_stream    = source_request.body
-        target_request.content_length = source_request.content_length
-        target_request.content_type   = source_request.content_type if source_request.content_type
       end
+
+      target_request.content_length = source_request.content_length || 0
+      target_request.content_type   = source_request.content_type if source_request.content_type
 
       # Create a streaming response (the actual network communication is deferred, a.k.a. streamed)
       target_response = HttpStreamingResponse.new(target_request, uri.host, uri.port)
