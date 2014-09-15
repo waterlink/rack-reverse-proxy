@@ -4,6 +4,9 @@ require 'rspec'
 require 'rack/test'
 require 'webmock/rspec'
 
+$LOAD_PATH << File.join(File.dirname(__FILE__), '..', 'lib')
+$LOAD_PATH << File.join(File.dirname(__FILE__))
+
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
     # This option will default to `true` in RSpec 4.
