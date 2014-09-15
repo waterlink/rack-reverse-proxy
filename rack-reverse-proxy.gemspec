@@ -7,29 +7,11 @@ Gem::Specification.new do |s|
   s.date = %q{2012-01-26}
   s.description = %q{A Rack based reverse proxy for basic needs.  Useful for testing or in cases where webserver configuration is unavailable.}
   s.email = %q{jaswope@gmail.com, ehlertij@gmail.com}
-  s.extra_rdoc_files = [
-    "LICENSE",
-    "README.md"
-  ]
-  s.files = [
-    ".document",
-    "LICENSE",
-    "README.md",
-    "Rakefile",
-    "VERSION",
-    "lib/rack/reverse_proxy.rb",
-    "rack-reverse-proxy.gemspec",
-    "spec/rack/reverse_proxy_spec.rb",
-    "spec/spec.opts",
-    "spec/spec_helper.rb"
-  ]
-  s.homepage = %q{http://github.com/jaswope/rack-reverse-proxy}
+  s.files = Dir['README.md', 'LICENSE', 'lib/**/*']
+  s.homepage = %q{http://github.com/pex/rack-reverse-proxy}
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.8.24}
   s.summary = %q{A Simple Reverse Proxy for Rack}
-  s.test_files = [
-    "spec/rack/reverse_proxy_spec.rb",
-  ]
 
   s.add_development_dependency "rspec", "~> 3.1"
   s.add_development_dependency "rake", "~> 10.3"
