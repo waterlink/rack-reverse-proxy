@@ -40,7 +40,7 @@ RSpec.describe Rack::ReverseProxy do
     it "should set the Host header" do
       stub_request(:any, 'example.com/test/stuff')
       get '/test/stuff'
-      a_request(:get, 'http://example.com/test/stuff').with(:headers => {"Host" => "example.com"}).should have_been_made
+      a_request(:get, 'http://example.com/test/stuff').with(:headers => {"Host" => "example.com:80"}).should have_been_made
     end
 
     it "should set the X-Forwarded-Host header to the proxying host by default" do
