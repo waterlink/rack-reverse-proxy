@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name          = 'rack-reverse-proxy'
-  s.version       = "0.8.0"
+  s.version       = "0.8.1"
   s.authors       = ["Jon Swope", "Ian Ehlert", "Roman Ernst"]
   s.description   = 'A Rack based reverse proxy for basic needs.  Useful for testing or in cases where webserver configuration is unavailable.'
   s.email         = ["jaswope@gmail.com", "ehlertij@gmail.com", "rernst@farbenmeer.net"]
