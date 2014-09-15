@@ -1,8 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
-describe Rack::ReverseProxy do
+RSpec.describe Rack::ReverseProxy do
   include Rack::Test::Methods
-  include WebMock::API
 
   def app
     Rack::ReverseProxy.new
