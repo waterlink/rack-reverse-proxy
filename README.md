@@ -3,13 +3,6 @@
 
 This is a simple reverse proxy for Rack that pretty heavily rips off Rack Forwarder. It is not meant for production systems (although it may work), as the webserver fronting your app is generally much better at this sort of thing.
 
-## Warning
-
-This is a **work in progress** and this fork (like others) breaks almost all test cases because of a [rack-proxy](https://github.com/ncr/rack-proxy) / [webmock](https://github.com/bblimke/webmock) issue described in [pex/rack-reverse-proxy#1](https://github.com/pex/rack-reverse-proxy/issues/1).
-Rack Proxy
-
-[Rack-proxy](https://github.com/ncr/rack-proxy) was introduced in [rack-reverse-proxy c6bbe0b](https://github.com/pex/rack-reverse-proxy/commit/c6bbe0b31a090ce81053c324581e205d8b3a5485).
-
 ## Installation
 The gem is available on gemcutter.  Assuming you have a recent version of Rubygems you should just be able to install it via:
 
