@@ -1,81 +1,115 @@
 require 'net/http'
 require 'net/https'
+require "rack-proxy"
+require "rack/reverse_proxy_matcher"
+require "rack/exception"
 
 module Rack
   class ReverseProxy
+    include NewRelic::Agent::Instrumentation::ControllerInstrumentation if defined? NewRelic
+
     def initialize(app = nil, &b)
       @app = app || lambda {|env| [404, [], []] }
       @matchers = []
-      @global_options = {:preserve_host => true, :x_forwarded_host => true, :matching => :all, :verify_ssl => true}
+      @global_options = {:preserve_host => true, :x_forwarded_host => true, :matching => :all, :replace_response_host => false}
       instance_eval &b if block_given?
     end
 
     def call(env)
       rackreq = Rack::Request.new(env)
-      matcher = get_matcher rackreq.fullpath
+      matcher = get_matcher(rackreq.fullpath, extract_http_request_headers(rackreq.env), rackreq)
       return @app.call(env) if matcher.nil?
 
-      uri = matcher.get_uri(rackreq.fullpath,env)
-      all_opts = @global_options.dup.merge(matcher.options)
-      headers = Rack::Utils::HeaderHash.new
-      env.each { |key, value|
-        if key =~ /HTTP_(.*)/
-          headers[$1] = value
+      if @global_options[:newrelic_instrumentation]
+        action_name = "#{rackreq.path.gsub(/\/\d+/,'/:id').gsub(/^\//,'')}/#{rackreq.request_method}" # Rack::ReverseProxy/foo/bar#GET
+        perform_action_with_newrelic_trace(:name => action_name, :request => rackreq) do
+          proxy(env, rackreq, matcher)
         end
-      }
-      headers['HOST'] = uri.host if all_opts[:preserve_host]
-      headers['X-Forwarded-Host'] = rackreq.host if all_opts[:x_forwarded_host]
-
-      session = Net::HTTP.new(uri.host, uri.port)
-      session.read_timeout=all_opts[:timeout] if all_opts[:timeout]
-
-      session.use_ssl = (uri.scheme == 'https')
-      if uri.scheme == 'https' && all_opts[:verify_ssl]
-        session.verify_mode = OpenSSL::SSL::VERIFY_PEER
       else
-        # DO NOT DO THIS IN PRODUCTION !!!
-        session.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        proxy(env, rackreq, matcher)
       end
-      session.start { |http|
-        m = rackreq.request_method
-        case m
-        when "GET", "HEAD", "DELETE", "OPTIONS", "TRACE"
-          req = Net::HTTP.const_get(m.capitalize).new(uri.request_uri, headers)
-          req.basic_auth all_opts[:username], all_opts[:password] if all_opts[:username] and all_opts[:password]
-        when "PUT", "POST"
-          req = Net::HTTP.const_get(m.capitalize).new(uri.request_uri, headers)
-          req.basic_auth all_opts[:username], all_opts[:password] if all_opts[:username] and all_opts[:password]
-
-          if rackreq.body.respond_to?(:read) && rackreq.body.respond_to?(:rewind)
-            body = rackreq.body.read
-            req.content_length = body.size
-            rackreq.body.rewind
-          else
-            req.content_length = rackreq.body.size
-          end
-
-          req.content_type = rackreq.content_type unless rackreq.content_type.nil?
-          req.body_stream = rackreq.body
-        else
-          raise "method not supported: #{m}"
-        end
-
-        body = ''
-        res = http.request(req) do |res|
-          res.read_body do |segment|
-            body << segment
-          end
-        end
-
-        [res.code, create_response_headers(res), [body]]
-      }
     end
 
     private
 
-    def get_matcher path
+    def proxy(env, source_request, matcher)
+      uri = matcher.get_uri(source_request.fullpath,env)
+      if uri.nil?
+        return @app.call(env)
+      end
+      options = @global_options.dup.merge(matcher.options)
+
+      # Initialize request
+      target_request = Net::HTTP.const_get(source_request.request_method.capitalize).new(uri.request_uri)
+
+      # Setup headers
+      target_request_headers = extract_http_request_headers(source_request.env)
+
+      if options[:preserve_host]
+        target_request_headers['HOST'] = "#{uri.host}:#{uri.port}"
+      end
+
+      if options[:x_forwarded_host]
+        target_request_headers['X-Forwarded-Host'] = source_request.host
+        target_request_headers['X-Forwarded-Port'] = "#{source_request.port}"
+      end
+
+      target_request.initialize_http_header(target_request_headers)
+
+      # Basic auth
+      target_request.basic_auth options[:username], options[:password] if options[:username] and options[:password]
+
+      # Setup body
+      if target_request.request_body_permitted? && source_request.body
+        source_request.body.rewind
+        target_request.body_stream    = source_request.body
+      end
+
+      target_request.content_length = source_request.content_length || 0
+      target_request.content_type   = source_request.content_type if source_request.content_type
+
+      # Create a streaming response (the actual network communication is deferred, a.k.a. streamed)
+      target_response = HttpStreamingResponse.new(target_request, uri.host, uri.port)
+
+      target_response.use_ssl = "https" == uri.scheme
+
+      # Let rack set the transfer-encoding header
+      response_headers = target_response.headers
+      response_headers.delete('transfer-encoding')
+
+      # Replace the location header with the proxy domain
+      if response_headers['location'] && options[:replace_response_host]
+        response_location = URI(response_headers['location'][0])
+        response_location.host = source_request.host
+        response_headers['location'] = response_location.to_s
+      end
+
+      [target_response.status, response_headers, target_response.body]
+    end
+
+    def extract_http_request_headers(env)
+      headers = env.reject do |k, v|
+        !(/^HTTP_[A-Z_]+$/ === k) || v.nil?
+      end.map do |k, v|
+        [reconstruct_header_name(k), v]
+      end.inject(Utils::HeaderHash.new) do |hash, k_v|
+        k, v = k_v
+        hash[k] = v
+        hash
+      end
+
+      x_forwarded_for = (headers["X-Forwarded-For"].to_s.split(/, +/) << env["REMOTE_ADDR"]).join(", ")
+
+      headers.merge!("X-Forwarded-For" =>  x_forwarded_for)
+    end
+
+    def reconstruct_header_name(name)
+      name.sub(/^HTTP_/, "").gsub("_", "-")
+    end
+
+    def get_matcher(path, headers, rackreq)
       matches = @matchers.select do |matcher|
-        matcher.match?(path)
+        matcher.match?(path, headers, rackreq)
       end
 
       if matches.length < 1
@@ -87,88 +121,13 @@ module Rack
       end
     end
 
-    def create_response_headers http_response
-      response_headers = Rack::Utils::HeaderHash.new(http_response.to_hash)
-      # handled by Rack
-      response_headers.delete('status')
-      # TODO: figure out how to handle chunked responses
-      response_headers.delete('transfer-encoding')
-      # TODO: Verify Content Length, and required Rack headers
-      response_headers
-    end
-
-
     def reverse_proxy_options(options)
       @global_options=options
     end
 
-    def reverse_proxy matcher, url, opts={}
+    def reverse_proxy(matcher, url=nil, opts={})
       raise GenericProxyURI.new(url) if matcher.is_a?(String) && url.is_a?(String) && URI(url).class == URI::Generic
       @matchers << ReverseProxyMatcher.new(matcher,url,opts)
     end
-  end
-
-  class GenericProxyURI < Exception
-    attr_reader :url
-
-    def intialize(url)
-      @url = url
-    end
-
-    def to_s
-      %Q(Your URL "#{@url}" is too generic. Did you mean "http://#{@url}"?)
-    end
-  end
-
-  class AmbiguousProxyMatch < Exception
-    attr_reader :path, :matches
-    def initialize(path, matches)
-      @path = path
-      @matches = matches
-    end
-
-    def to_s
-      %Q(Path "#{path}" matched multiple endpoints: #{formatted_matches})
-    end
-
-    private
-
-    def formatted_matches
-      matches.map {|matcher| matcher.to_s}.join(', ')
-    end
-  end
-
-  class ReverseProxyMatcher
-    def initialize(matching,url,options)
-      @matching=matching
-      @url=url
-      @options=options
-      @matching_regexp= matching.kind_of?(Regexp) ? matching : /^#{matching.to_s}/
-    end
-
-    attr_reader :matching,:matching_regexp,:url,:options
-
-    def match?(path)
-      match_path(path) ? true : false
-    end
-
-    def get_uri(path,env)
-      _url=(url.respond_to?(:call) ? url.call(env) : url.clone)
-      if _url =~/\$\d/
-        match_path(path).to_a.each_with_index { |m, i| _url.gsub!("$#{i.to_s}", m) }
-        URI(_url)
-      else
-        URI.join(_url, path)
-      end
-    end
-    def to_s
-      %Q("#{matching.to_s}" => "#{url}")
-    end
-    private
-    def match_path(path)
-      path.match(matching_regexp)
-    end
-
-
   end
 end

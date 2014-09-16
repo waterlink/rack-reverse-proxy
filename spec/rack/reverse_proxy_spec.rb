@@ -1,8 +1,7 @@
-require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+require 'spec_helper'
 
-describe Rack::ReverseProxy do
+RSpec.describe Rack::ReverseProxy do
   include Rack::Test::Methods
-  include WebMock::API
 
   def app
     Rack::ReverseProxy.new
@@ -38,22 +37,10 @@ describe Rack::ReverseProxy do
       last_response.body.should == "Proxied App2"
     end
 
-    it "the response header should never contain Status" do
-      stub_request(:any, 'example.com/test/stuff').to_return(:headers => {'Status' => '200 OK'})
-      get '/test/stuff'
-      last_response.headers['Status'].should == nil
-    end
-
-    it "the response header should never transfer-encoding" do
-      stub_request(:any, 'example.com/test/stuff').to_return(:headers => {'transfer-encoding' => 'Chunked'})
-      get '/test/stuff'
-      last_response.headers['transfer-encoding'].should == nil
-    end
-
     it "should set the Host header" do
       stub_request(:any, 'example.com/test/stuff')
       get '/test/stuff'
-      a_request(:get, 'http://example.com/test/stuff').with(:headers => {"Host" => "example.com"}).should have_been_made
+      a_request(:get, 'http://example.com/test/stuff').with(:headers => {"Host" => "example.com:80"}).should have_been_made
     end
 
     it "should set the X-Forwarded-Host header to the proxying host by default" do
@@ -104,6 +91,21 @@ describe Rack::ReverseProxy do
         stub_request(:get, "http://joe:shmoe@example.com/test/stuff").to_return(:body => "secured content")
         get '/test/stuff'
         last_response.body.should == "secured content"
+      end
+    end
+
+    describe "with preserve response host turned on" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy '/test', 'http://example.com/', {:replace_response_host => true}
+        end
+      end
+
+      it "should replace the location response header" do
+        stub_request(:get, "http://example.com/test/stuff").to_return(:headers => {"location" => "http://test.com/bar"})
+        get 'http://example.com/test/stuff'
+        # puts last_response.headers.inspect
+        last_response.headers['location'].should == "http://example.com/bar"
       end
     end
 
@@ -217,6 +219,120 @@ describe Rack::ReverseProxy do
             end
           end
         end
+      end
+    end
+
+    describe "with a matching class" do
+      class Matcher
+        def self.match(path)
+          if path.match(/^\/(test|users)/)
+            Matcher.new
+          end
+        end
+
+        def url(path)
+          if path.include?("user")
+            'http://users-example.com' + path
+          else
+            'http://example.com' + path
+          end
+        end
+      end
+
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy Matcher
+        end
+      end
+
+      it "should forward requests to the calling app when the path is not matched" do
+        get '/'
+        last_response.body.should == "Dummy App"
+        last_response.should be_ok
+      end
+
+      it "should proxy requests when a pattern is matched" do
+        stub_request(:get, 'http://example.com/test').to_return({:body => "Proxied App"})
+        stub_request(:get, 'http://users-example.com/users').to_return({:body => "User App"})
+        get '/test'
+        last_response.body.should == "Proxied App"
+        get '/users'
+        last_response.body.should == "User App"
+      end
+    end
+
+    describe "with a matching class" do
+      class RequestMatcher
+        attr_accessor :rackreq
+
+        def initialize(rackreq)
+          self.rackreq = rackreq
+        end
+
+        def self.match(path, headers, rackreq)
+          if path.match(/^\/(test|users)/)
+            RequestMatcher.new(rackreq)
+          end
+        end
+
+        def url(path)
+          if rackreq.params["user"] == 'omer'
+            'http://users-example.com' + path
+          end
+        end
+      end
+
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy RequestMatcher
+        end
+      end
+
+      it "should forward requests to the calling app when the path is not matched" do
+        get '/'
+        last_response.body.should == "Dummy App"
+        last_response.should be_ok
+      end
+
+      it "should proxy requests when a pattern is matched" do
+        stub_request(:get, 'http://users-example.com/users?user=omer').to_return({:body => "User App"})
+        get '/test', user: "mark"
+        last_response.body.should == "Dummy App"
+        get '/users', user: 'omer'
+        last_response.body.should == "User App"
+      end
+    end
+
+
+    describe "with a matching class that accepts headers" do
+      class MatcherHeaders
+        def self.match(path, headers)
+          if path.match(/^\/test/) && headers['ACCEPT'] && headers['ACCEPT'] == 'foo.bar'
+            MatcherHeaders.new
+          end
+        end
+
+        def url(path)
+          'http://example.com' + path
+        end
+      end
+
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy MatcherHeaders, nil, {:accept_headers => true}
+        end
+      end
+
+      it "should proxy requests when a pattern is matched and correct headers are passed" do
+        stub_request(:get, 'http://example.com/test').to_return({:body => "Proxied App with Headers"})
+        get '/test', {}, {'HTTP_ACCEPT' => 'foo.bar'}
+        last_response.body.should == "Proxied App with Headers"
+      end
+
+      it "should not proxy requests when a pattern is matched and incorrect headers are passed" do
+        stub_request(:get, 'http://example.com/test').to_return({:body => "Proxied App with Headers"})
+        get '/test', {}, {'HTTP_ACCEPT' => 'bar.foo'}
+        last_response.body.should_not == "Proxied App with Headers"
       end
     end
   end
