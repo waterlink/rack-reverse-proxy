@@ -82,12 +82,12 @@ module Rack
       target_response.use_ssl = "https" == uri.scheme
 
       # Let rack set the transfer-encoding header
-      response_headers = format_headers(target_response.headers)
+      response_headers = Rack::Utils::HeaderHash.new Proxy.normalize_headers(format_headers(target_response.headers))
       response_headers.delete('Transfer-Encoding')
 
       # Replace the location header with the proxy domain
       if response_headers['Location'] && options[:replace_response_host]
-        response_location = URI(response_headers['Location'][0])
+        response_location = URI(response_headers['location'])
         response_location.host = source_request.host
         response_location.port = source_request.port
         response_headers['Location'] = response_location.to_s

@@ -31,6 +31,19 @@ RSpec.describe Rack::ReverseProxy do
       last_response.body.should == "Proxied App"
     end
 
+    it "should produce a response header of type HeaderHash" do
+      stub_request(:get, 'http://example.com/test')
+      get '/test'
+      last_response.headers.should be_an_instance_of Rack::Utils::HeaderHash
+    end
+
+    it "should parse the headers as a Hash with values of type String" do
+      stub_request(:get, 'http://example.com/test').to_return({:headers => {'cache-control'=> 'max-age=300, public'} })
+      get '/test'
+      last_response.headers['cache-control'].should be_an_instance_of String
+      last_response.headers['cache-control'].should == 'max-age=300, public'
+    end
+
     it "should proxy requests to a lambda url when a pattern is matched" do
       stub_request(:get, 'http://example.com/2test').to_return({:body => "Proxied App2"})
       get '/2test'
@@ -166,7 +179,6 @@ RSpec.describe Rack::ReverseProxy do
       it "should replace the location response header" do
         stub_request(:get, "http://example.com/test/stuff").to_return(:headers => {"location" => "http://test.com/bar"})
         get 'http://example.com/test/stuff'
-        # puts last_response.headers.inspect
         last_response.headers['location'].should == "http://example.com/bar"
       end
 
