@@ -49,6 +49,16 @@ RSpec.describe Rack::ReverseProxy do
       a_request(:get, 'http://example.com/test/stuff').with(:headers => {'X-Forwarded-Host' => 'example.org'}).should have_been_made
     end
 
+    it 'should format the headers correctly to avoid duplicates' do
+      stub_request(:get, 'http://example.com/2test').to_return({:status => 301, :headers => {:status => '301 Moved Permanently'}})
+
+      get '/2test'
+
+      headers = last_response.headers.to_hash
+      headers['Status'].should == "301 Moved Permanently"
+      headers['status'].should be_nil
+    end
+
     describe "with non-default port" do
       def app
         Rack::ReverseProxy.new(dummy_app) do
