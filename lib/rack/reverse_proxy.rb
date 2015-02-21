@@ -89,6 +89,7 @@ module Rack
       if response_headers['location'] && options[:replace_response_host]
         response_location = URI(response_headers['location'][0])
         response_location.host = source_request.host
+        response_location.port = source_request.port
         response_headers['location'] = response_location.to_s
       end
 
