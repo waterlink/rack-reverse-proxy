@@ -1,11 +1,11 @@
 Gem::Specification.new do |s|
   s.name          = 'rack-reverse-proxy'
   s.version       = "0.8.1"
-  s.authors       = ["Jon Swope", "Ian Ehlert", "Roman Ernst"]
+  s.authors       = ["Jon Swope", "Ian Ehlert", "Roman Ernst", "Oleksii Fedorov"]
   s.description   = 'A Rack based reverse proxy for basic needs.  Useful for testing or in cases where webserver configuration is unavailable.'
-  s.email         = ["jaswope@gmail.com", "ehlertij@gmail.com", "rernst@farbenmeer.net"]
+  s.email         = ["jaswope@gmail.com", "ehlertij@gmail.com", "rernst@farbenmeer.net", "waterlink000@gmail.com"]
   s.files         = Dir['README.md', 'LICENSE', 'lib/**/*']
-  s.homepage      = 'http://github.com/pex/rack-reverse-proxy'
+  s.homepage      = 'http://github.com/waterlink/rack-reverse-proxy'
   s.require_paths = ["lib"]
   s.summary       = 'A Simple Reverse Proxy for Rack'
 
