@@ -47,7 +47,11 @@ module Rack
       target_request_headers = extract_http_request_headers(source_request.env)
 
       if options[:preserve_host]
-        target_request_headers['HOST'] = "#{uri.host}:#{uri.port}"
+        if uri.port == uri.default_port
+          target_request_headers['HOST'] = uri.host
+        else
+          target_request_headers['HOST'] = "#{uri.host}:#{uri.port}"
+        end
       end
 
       if options[:x_forwarded_host]

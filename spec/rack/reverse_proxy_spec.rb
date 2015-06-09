@@ -37,16 +37,30 @@ RSpec.describe Rack::ReverseProxy do
       last_response.body.should == "Proxied App2"
     end
 
-    it "should set the Host header" do
+    it "should set the Host header w/o default port" do
       stub_request(:any, 'example.com/test/stuff')
       get '/test/stuff'
-      a_request(:get, 'http://example.com/test/stuff').with(:headers => {"Host" => "example.com:80"}).should have_been_made
+      a_request(:get, 'http://example.com/test/stuff').with(:headers => {"Host" => "example.com"}).should have_been_made
     end
 
     it "should set the X-Forwarded-Host header to the proxying host by default" do
       stub_request(:any, 'example.com/test/stuff')
       get '/test/stuff'
       a_request(:get, 'http://example.com/test/stuff').with(:headers => {'X-Forwarded-Host' => 'example.org'}).should have_been_made
+    end
+
+    describe "with non-default port" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy '/test', 'http://example.com:8080/'
+        end
+      end
+
+      it "should set the Host header including non-default port" do
+        stub_request(:any, 'example.com:8080/test/stuff')
+        get '/test/stuff'
+        a_request(:get, 'http://example.com:8080/test/stuff').with(:headers => {"Host" => "example.com:8080"}).should have_been_made
+      end
     end
 
     describe "with preserve host turned off" do
@@ -194,6 +208,25 @@ RSpec.describe Rack::ReverseProxy do
         last_response.body.should == "Proxied Secure App"
       end
 
+      it "should set the Host header w/o default port" do
+        stub_request(:any, 'https://example.com/test/stuff')
+        get '/test/stuff'
+        a_request(:get, 'https://example.com/test/stuff').with(:headers => {"Host" => "example.com"}).should have_been_made
+      end
+    end
+
+    describe "with a https route on non-default port" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy '/test', 'https://example.com:8443'
+        end
+      end
+
+      it "should set the Host header including non-default port" do
+        stub_request(:any, 'https://example.com:8443/test/stuff')
+        get '/test/stuff'
+        a_request(:get, 'https://example.com:8443/test/stuff').with(:headers => {"Host" => "example.com:8443"}).should have_been_made
+      end
     end
 
     describe "with a route as a string" do
