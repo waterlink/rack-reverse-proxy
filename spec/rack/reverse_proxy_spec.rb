@@ -80,6 +80,34 @@ RSpec.describe Rack::ReverseProxy do
       end
     end
 
+    describe "with timeout configuration" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy '/test/slow', 'http://example.com/', {:timeout => 99}
+        end
+      end
+
+      it "should make request with basic auth" do
+        stub_request(:get, "http://example.com/test/slow")
+        Rack::HttpStreamingResponse.any_instance.should_receive(:read_timeout=).with(99)
+        get '/test/slow'
+      end
+    end
+
+    describe "without timeout configuration" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy '/test/slow', 'http://example.com/'
+        end
+      end
+
+      it "should make request with basic auth" do
+        stub_request(:get, "http://example.com/test/slow")
+        Rack::HttpStreamingResponse.any_instance.should_not_receive(:read_timeout=)
+        get '/test/slow'
+      end
+    end
+
     describe "with basic auth turned on" do
       def app
         Rack::ReverseProxy.new(dummy_app) do
