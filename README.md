@@ -59,6 +59,7 @@ reverse_proxy_options sets global options for all reverse proxies. Available opt
   (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
 * Send me a pull request. Bonus points for topic branches.
 
-## Copyright
+## Contributors
 
-Copyright (c) 2010 Jon Swope. See LICENSE for details.
+- Jon Swope, creator
+- Oleksii Fedorov, maintainer
