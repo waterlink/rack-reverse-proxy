@@ -71,6 +71,9 @@ module Rack
       # Create a streaming response (the actual network communication is deferred, a.k.a. streamed)
       target_response = HttpStreamingResponse.new(target_request, uri.host, uri.port)
 
+      # pass the timeout configuration through
+      target_response.read_timeout = options[:timeout] if options[:timeout].to_i > 0
+
       target_response.use_ssl = "https" == uri.scheme
 
       # Let rack set the transfer-encoding header
