@@ -1,5 +1,5 @@
 # A Reverse Proxy for Rack
-[![TravisCI](https://secure.travis-ci.org/pex/rack-reverse-proxy.png "Build Status")](http://travis-ci.org/pex/rack-reverse-proxy "Build Status")
+[![TravisCI](https://secure.travis-ci.org/waterlink/rack-reverse-proxy.png "Build Status")](http://travis-ci.org/waterlink/rack-reverse-proxy "Build Status")
 
 This is a simple reverse proxy for Rack that pretty heavily rips off Rack Forwarder. It is not meant for production systems (although it may work), as the webserver fronting your app is generally much better at this sort of thing.
 
