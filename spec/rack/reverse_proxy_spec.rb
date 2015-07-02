@@ -324,9 +324,9 @@ RSpec.describe Rack::ReverseProxy do
 
       it "should proxy requests when a pattern is matched" do
         stub_request(:get, 'http://users-example.com/users?user=omer').to_return({:body => "User App"})
-        get '/test', user: "mark"
+        get '/test', :user => "mark"
         last_response.body.should == "Dummy App"
-        get '/users', user: 'omer'
+        get '/users', :user => 'omer'
         last_response.body.should == "User App"
       end
     end
