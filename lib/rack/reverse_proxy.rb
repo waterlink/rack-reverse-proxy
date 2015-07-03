@@ -13,7 +13,7 @@ module Rack
       @app = app || lambda {|env| [404, [], []] }
       @matchers = []
       @global_options = {:preserve_host => true, :x_forwarded_host => true, :matching => :all, :replace_response_host => false}
-      instance_eval &b if block_given?
+      instance_eval(&b) if block_given?
     end
 
     def call(env)
@@ -82,15 +82,15 @@ module Rack
       target_response.use_ssl = "https" == uri.scheme
 
       # Let rack set the transfer-encoding header
-      response_headers = target_response.headers
-      response_headers.delete('transfer-encoding')
+      response_headers = format_headers(target_response.headers)
+      response_headers.delete('Transfer-Encoding')
 
       # Replace the location header with the proxy domain
-      if response_headers['location'] && options[:replace_response_host]
-        response_location = URI(response_headers['location'][0])
+      if response_headers['Location'] && options[:replace_response_host]
+        response_location = URI(response_headers['Location'][0])
         response_location.host = source_request.host
         response_location.port = source_request.port
-        response_headers['location'] = response_location.to_s
+        response_headers['Location'] = response_location.to_s
       end
 
       [target_response.status, response_headers, target_response.body]
@@ -137,6 +137,14 @@ module Rack
     def reverse_proxy(matcher, url=nil, opts={})
       raise GenericProxyURI.new(url) if matcher.is_a?(String) && url.is_a?(String) && URI(url).class == URI::Generic
       @matchers << ReverseProxyMatcher.new(matcher,url,opts)
+    end
+
+    def format_headers(headers)
+      headers.reduce({}) do |acc, (key, val)|
+        formated_key = key.split('-').map(&:capitalize).join('-')
+        acc[formated_key] = Array(val)
+	acc
+      end
     end
   end
 end
