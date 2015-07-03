@@ -18,7 +18,7 @@ module Rack
 
     def call(env)
       rackreq = Rack::Request.new(env)
-      matcher = get_matcher(rackreq.fullpath, extract_http_request_headers(rackreq.env), rackreq)
+      matcher = get_matcher(rackreq.fullpath, Proxy.extract_http_request_headers(rackreq.env), rackreq)
       return @app.call(env) if matcher.nil?
 
       if @global_options[:newrelic_instrumentation]
@@ -44,7 +44,7 @@ module Rack
       target_request = Net::HTTP.const_get(source_request.request_method.capitalize).new(uri.request_uri)
 
       # Setup headers
-      target_request_headers = extract_http_request_headers(source_request.env)
+      target_request_headers = Proxy.extract_http_request_headers(source_request.env)
 
       if options[:preserve_host]
         if uri.port == uri.default_port
@@ -82,38 +82,18 @@ module Rack
       target_response.use_ssl = "https" == uri.scheme
 
       # Let rack set the transfer-encoding header
-      response_headers = format_headers(target_response.headers)
+      response_headers = Rack::Utils::HeaderHash.new Proxy.normalize_headers(format_headers(target_response.headers))
       response_headers.delete('Transfer-Encoding')
 
       # Replace the location header with the proxy domain
       if response_headers['Location'] && options[:replace_response_host]
-        response_location = URI(response_headers['Location'][0])
+        response_location = URI(response_headers['location'])
         response_location.host = source_request.host
         response_location.port = source_request.port
         response_headers['Location'] = response_location.to_s
       end
 
       [target_response.status, response_headers, target_response.body]
-    end
-
-    def extract_http_request_headers(env)
-      headers = env.reject do |k, v|
-        !(/^HTTP_[A-Z_]+$/ === k) || v.nil?
-      end.map do |k, v|
-        [reconstruct_header_name(k), v]
-      end.inject(Utils::HeaderHash.new) do |hash, k_v|
-        k, v = k_v
-        hash[k] = v
-        hash
-      end
-
-      x_forwarded_for = (headers["X-Forwarded-For"].to_s.split(/, +/) << env["REMOTE_ADDR"]).join(", ")
-
-      headers.merge!("X-Forwarded-For" =>  x_forwarded_for)
-    end
-
-    def reconstruct_header_name(name)
-      name.sub(/^HTTP_/, "").gsub("_", "-")
     end
 
     def get_matcher(path, headers, rackreq)
