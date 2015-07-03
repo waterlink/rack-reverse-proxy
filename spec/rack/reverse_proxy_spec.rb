@@ -89,7 +89,7 @@ RSpec.describe Rack::ReverseProxy do
 
       it "should make request with basic auth" do
         stub_request(:get, "http://example.com/test/slow")
-        Rack::HttpStreamingResponse.any_instance.should_receive(:read_timeout=).with(99)
+        Rack::HttpStreamingResponse.any_instance.should_receive(:set_read_timeout).with(99)
         get '/test/slow'
       end
     end
@@ -103,7 +103,7 @@ RSpec.describe Rack::ReverseProxy do
 
       it "should make request with basic auth" do
         stub_request(:get, "http://example.com/test/slow")
-        Rack::HttpStreamingResponse.any_instance.should_not_receive(:read_timeout=)
+        Rack::HttpStreamingResponse.any_instance.should_not_receive(:set_read_timeout)
         get '/test/slow'
       end
     end
@@ -324,9 +324,9 @@ RSpec.describe Rack::ReverseProxy do
 
       it "should proxy requests when a pattern is matched" do
         stub_request(:get, 'http://users-example.com/users?user=omer').to_return({:body => "User App"})
-        get '/test', user: "mark"
+        get '/test', :user => "mark"
         last_response.body.should == "Dummy App"
-        get '/users', user: 'omer'
+        get '/users', :user => 'omer'
         last_response.body.should == "User App"
       end
     end
