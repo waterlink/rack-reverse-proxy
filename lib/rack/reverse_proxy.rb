@@ -140,9 +140,10 @@ module Rack
     end
 
     def format_headers(headers)
-      headers.each_with_object({}).each do |(key, val), acc|
+      headers.reduce({}) do |acc, (key, val)|
         formated_key = key.split('-').map(&:capitalize).join('-')
         acc[formated_key] = Array(val)
+	acc
       end
     end
   end
