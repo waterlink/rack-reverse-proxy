@@ -59,6 +59,16 @@ RSpec.describe Rack::ReverseProxy do
       headers['status'].should be_nil
     end
 
+    it 'should format the headers with dashes correctly' do
+      stub_request(:get, 'http://example.com/2test').to_return({:status => 301, :headers => {:status => '301 Moved Permanently', :"x-additional-info" => "something"}})
+
+      get '/2test'
+
+      headers = last_response.headers.to_hash
+      headers['X-Additional-Info'].should == "something"
+      headers['x-additional-info'].should be_nil
+    end
+
     describe "with non-default port" do
       def app
         Rack::ReverseProxy.new(dummy_app) do
