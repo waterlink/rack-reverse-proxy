@@ -9,10 +9,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.summary       = 'A Simple Reverse Proxy for Rack'
 
-  s.add_development_dependency "rspec", "~> 3.1"
   s.add_development_dependency "rake", "~> 10.3"
-  s.add_development_dependency "rack-test", "~> 0.6"
-  s.add_development_dependency "webmock", "~> 1.18"
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "guard-bundler"
 
