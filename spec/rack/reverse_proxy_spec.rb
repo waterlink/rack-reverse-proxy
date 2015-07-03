@@ -149,6 +149,12 @@ RSpec.describe Rack::ReverseProxy do
         # puts last_response.headers.inspect
         last_response.headers['location'].should == "http://example.com/bar"
       end
+
+      it "should keep the port of the location" do
+        stub_request(:get, "http://example.com/test/stuff").to_return(:headers => {"location" => "http://test.com/bar"})
+        get 'http://example.com:3000/test/stuff'
+        last_response.headers['location'].should == "http://example.com:3000/bar"
+      end
     end
 
     describe "with ambiguous routes and all matching" do
