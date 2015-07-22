@@ -4,7 +4,7 @@
 This is a simple reverse proxy for Rack that pretty heavily rips off Rack Forwarder. It is not meant for production systems (although it may work), as the webserver fronting your app is generally much better at this sort of thing.
 
 ## Installation
-The gem is available on gemcutter.  Assuming you have a recent version of Rubygems you should just be able to install it via:
+The gem is available on rubygems.  Assuming you have a recent version of Rubygems you should just be able to install it via:
 
 ```
 gem install rack-reverse-proxy
