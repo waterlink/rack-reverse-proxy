@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1
+
+- Enhancement: Remove `Status` key from response headers as per Rack protocol (see [rack/lint](https://github.com/rack/rack/blob/master/lib/rack/lint.rb#L639)) - [Jan Raasch](https://github.com/janraasch) [#7](https://github.com/waterlink/rack-reverse-proxy/pull/7)
+
 ## 0.9.0
 
 - Bugfix: Timeout option matches the documentation - [Paul Hepworth](https://github.com/peppyheppy)
