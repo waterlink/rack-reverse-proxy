@@ -62,14 +62,23 @@ RSpec.describe Rack::ReverseProxy do
       a_request(:get, 'http://example.com/test/stuff').with(:headers => {'X-Forwarded-Host' => 'example.org'}).should have_been_made
     end
 
-    it 'should format the headers correctly to avoid duplicates' do
+    it 'should should not produce headers with a Status key' do
       stub_request(:get, 'http://example.com/2test').to_return({:status => 301, :headers => {:status => '301 Moved Permanently'}})
 
       get '/2test'
 
       headers = last_response.headers.to_hash
-      headers['Status'].should == "301 Moved Permanently"
-      headers['status'].should be_nil
+      headers['Status'].should be_nil
+    end
+
+    it 'should format the headers correctly to avoid duplicates' do
+      stub_request(:get, 'http://example.com/2test').to_return(:headers => {:date => 'Wed, 22 Jul 2015 11:27:21 GMT'})
+
+      get '/2test'
+
+      headers = last_response.headers.to_hash
+      headers['Date'].should == 'Wed, 22 Jul 2015 11:27:21 GMT'
+      headers['date'].should be_nil
     end
 
     it 'should format the headers with dashes correctly' do
