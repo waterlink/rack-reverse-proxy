@@ -145,7 +145,7 @@ RSpec.describe Rack::ReverseProxy do
 
       it "should make request with basic auth" do
         stub_request(:get, "http://example.com/test/slow")
-        Rack::HttpStreamingResponse.any_instance.should_receive(:set_read_timeout).with(99)
+        Rack::HttpStreamingResponse.any_instance.should_receive(:read_timeout=).with(99)
         get '/test/slow'
       end
     end
@@ -159,7 +159,7 @@ RSpec.describe Rack::ReverseProxy do
 
       it "should make request with basic auth" do
         stub_request(:get, "http://example.com/test/slow")
-        Rack::HttpStreamingResponse.any_instance.should_not_receive(:set_read_timeout)
+        Rack::HttpStreamingResponse.any_instance.should_not_receive(:read_timeout=)
         get '/test/slow'
       end
     end
