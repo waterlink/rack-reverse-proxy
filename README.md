@@ -50,6 +50,28 @@ reverse_proxy_options sets global options for all reverse proxies. Available opt
 * `:matching` is a global only option, if set to :first the first matched url will be requested (no ambigous error). Default: :all.
 * `:timeout` seconds to timout the requests
 
+### Sample usage in a Ruby on Rails app
+
+Rails 3 or less:
+
+```ruby
+# config/application.rb
+config.middleware.insert_before(Rack::Lock, Rack::ReverseProxy) do
+  reverse_proxy_options preserve_host: true
+  reverse_proxy '/wiki', 'http://wiki.example.com/'
+end
+```
+
+Rails 4+ or if you use `config.threadsafe`, you'll need to `insert_before(Rack::Runtime, Rack::ReverseProxy)` as `Rack::Lock` does not exist when `config.allow_concurrency == true`:
+
+```ruby
+# config/application.rb
+config.middleware.insert_before(Rack::Runtime, Rack::ReverseProxy) do
+  reverse_proxy_options preserve_host: true
+  reverse_proxy '/wiki', 'http://wiki.example.com/'
+end
+```
+
 ## Note on Patches/Pull Requests
 * Fork the project.
 * Make your feature addition or bug fix.
