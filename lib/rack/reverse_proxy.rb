@@ -3,7 +3,6 @@ require 'net/https'
 require "rack-proxy"
 require "rack/reverse_proxy_matcher"
 require "rack/exception"
-require "rack/reverse_proxy/http_streaming_response"
 
 module Rack
   class ReverseProxy
@@ -77,7 +76,7 @@ module Rack
       target_response = HttpStreamingResponse.new(target_request, uri.host, uri.port)
 
       # pass the timeout configuration through
-      target_response.set_read_timeout(options[:timeout]) if options[:timeout].to_i > 0
+      target_response.read_timeout = options[:timeout] if options[:timeout].to_i > 0
 
       target_response.use_ssl = "https" == uri.scheme
 

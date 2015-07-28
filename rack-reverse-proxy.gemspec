@@ -14,5 +14,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard-bundler"
 
   s.add_dependency "rack", ">= 1.0.0"
-  s.add_dependency "rack-proxy", "~> 0.5"
+  s.add_dependency "rack-proxy", "~> 0.5", ">= 0.5.14"
 end

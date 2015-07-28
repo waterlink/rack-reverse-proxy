@@ -11,6 +11,17 @@ RSpec.describe Rack::ReverseProxy do
     lambda { |env| [200, {}, ['Dummy App']] }
   end
 
+  let(:http_streaming_response) {
+    double(
+      "Rack::HttpStreamingResponse",
+      :use_ssl= => nil,
+      :verify_mode= => nil,
+      :headers => {},
+      :status => 200,
+      :body => "OK"
+    )
+  }
+
   describe "as middleware" do
     def app
       Rack::ReverseProxy.new(dummy_app) do
@@ -145,7 +156,8 @@ RSpec.describe Rack::ReverseProxy do
 
       it "should make request with basic auth" do
         stub_request(:get, "http://example.com/test/slow")
-        Rack::HttpStreamingResponse.any_instance.should_receive(:set_read_timeout).with(99)
+        allow(Rack::HttpStreamingResponse).to receive(:new).and_return(http_streaming_response)
+        expect(http_streaming_response).to receive(:read_timeout=).with(99)
         get '/test/slow'
       end
     end
@@ -159,7 +171,8 @@ RSpec.describe Rack::ReverseProxy do
 
       it "should make request with basic auth" do
         stub_request(:get, "http://example.com/test/slow")
-        Rack::HttpStreamingResponse.any_instance.should_not_receive(:set_read_timeout)
+        allow(Rack::HttpStreamingResponse).to receive(:new).and_return(http_streaming_response)
+        expect(http_streaming_response).not_to receive(:read_timeout=)
         get '/test/slow'
       end
     end
