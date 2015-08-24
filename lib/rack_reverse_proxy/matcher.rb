@@ -1,5 +1,5 @@
-module Rack
-  class ReverseProxyMatcher
+module RackReverseProxy
+  class Matcher
     def initialize(matcher, url=nil, options={})
       @default_url=url
       @url=url

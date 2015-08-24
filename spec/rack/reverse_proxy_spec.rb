@@ -221,7 +221,7 @@ RSpec.describe Rack::ReverseProxy do
       end
 
       it "should throw an exception" do
-        lambda { get '/test' }.should raise_error(Rack::AmbiguousProxyMatch)
+        lambda { get '/test' }.should raise_error(RackReverseProxy::Errors::AmbiguousMatch)
       end
     end
 
@@ -313,7 +313,7 @@ RSpec.describe Rack::ReverseProxy do
       end
 
       it "should throw an exception" do
-        lambda{ app }.should raise_error(Rack::GenericProxyURI)
+        lambda{ app }.should raise_error(RackReverseProxy::Errors::GenericURI)
       end
     end
 

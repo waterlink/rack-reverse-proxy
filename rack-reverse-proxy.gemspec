@@ -1,18 +1,25 @@
-Gem::Specification.new do |s|
-  s.name          = 'rack-reverse-proxy'
-  s.version       = "0.9.1"
-  s.authors       = ["Jon Swope", "Ian Ehlert", "Roman Ernst", "Oleksii Fedorov"]
-  s.description   = 'A Rack based reverse proxy for basic needs.  Useful for testing or in cases where webserver configuration is unavailable.'
-  s.email         = ["jaswope@gmail.com", "ehlertij@gmail.com", "rernst@farbenmeer.net", "waterlink000@gmail.com"]
-  s.files         = Dir['README.md', 'LICENSE', 'lib/**/*']
-  s.homepage      = 'http://github.com/waterlink/rack-reverse-proxy'
-  s.require_paths = ["lib"]
-  s.summary       = 'A Simple Reverse Proxy for Rack'
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+require 'rack_reverse_proxy/version'
 
-  s.add_development_dependency "rake", "~> 10.3"
-  s.add_development_dependency "guard-rspec"
-  s.add_development_dependency "guard-bundler"
+Gem::Specification.new do |spec|
+  spec.name          = "rack-reverse-proxy"
+  spec.version       = RackReverseProxy::VERSION
+  spec.authors       = ["Jon Swope", "Ian Ehlert", "Roman Ernst", "Oleksii Fedorov"]
+  spec.email         = ["jaswope@gmail.com", "ehlertij@gmail.com", "rernst@farbenmeer.net", "waterlink000@gmail.com"]
+  spec.summary       = %q{A Simple Reverse Proxy for Rack}
+  spec.description   = %q{A Rack based reverse proxy for basic needs.  Useful for testing or in cases where webserver configuration is unavailable.}
+  spec.homepage      = "https://github.com/waterlink/rack-reverse-proxy"
+  spec.license       = "MIT"
 
-  s.add_dependency "rack", ">= 1.0.0"
-  s.add_dependency "rack-proxy", "~> 0.5", ">= 0.5.14"
+  spec.files         = `git ls-files -z`.split("\x0")
+  spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
+  spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
+  spec.require_paths = ["lib"]
+
+  spec.add_dependency "rack", ">= 1.0.0"
+  spec.add_dependency "rack-proxy", "~> 0.5", ">= 0.5.14"
+
+  spec.add_development_dependency "bundler", "~> 1.7"
+  spec.add_development_dependency "rake", "~> 10.3"
 end

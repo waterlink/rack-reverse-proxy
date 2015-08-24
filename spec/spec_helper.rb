@@ -1,13 +1,13 @@
-require 'rubygems'
-require 'rack/reverse_proxy'
-require 'rspec'
-require 'rack/test'
-require 'webmock/rspec'
-# Patch HttpStreamingResponse to make rack-proxy compatible with webmocks
-require 'support/http_streaming_response_patch'
+# Code coverage
+require "simplecov"
+SimpleCov.start
 
-$LOAD_PATH << File.join(File.dirname(__FILE__), '..', 'lib')
-$LOAD_PATH << File.join(File.dirname(__FILE__))
+require "rack/reverse_proxy"
+require "rack/test"
+require "webmock/rspec"
+
+# Patch HttpStreamingResponse to make rack-proxy compatible with webmocks
+require "support/http_streaming_response_patch"
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
