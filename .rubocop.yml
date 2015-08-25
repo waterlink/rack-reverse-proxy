@@ -1,0 +1,15 @@
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Metrics/LineLength:
+  Max: 100
+
+Style/TrailingComma:
+  EnforcedStyleForMultiline: comma
+
+#begin ruby 1.8 support
+Style/HashSyntax:
+  EnforcedStyle: hash_rockets
+
+Style/Lambda:
+  Enabled: false

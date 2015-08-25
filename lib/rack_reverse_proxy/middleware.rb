@@ -1,25 +1,44 @@
-require 'net/http'
-require 'net/https'
+require "net/http"
+require "net/https"
 require "rack-proxy"
 
 module RackReverseProxy
+  # FIXME: Enable them and fix issues during refactoring
+  # rubocop:disable Metrics/ClassLength
+  # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/PerceivedComplexity
+  # rubocop:disable Metrics/AbcSize
+
+  # Rack middleware for handling reverse proxying
   class Middleware
     include NewRelic::Agent::Instrumentation::ControllerInstrumentation if defined? NewRelic
 
     def initialize(app = nil, &b)
-      @app = app || lambda {|env| [404, [], []] }
+      @app = app || lambda { |_| [404, [], []] }
       @matchers = []
-      @global_options = {:preserve_host => true, :x_forwarded_host => true, :matching => :all, :replace_response_host => false}
+      @global_options = {
+        :preserve_host => true,
+        :x_forwarded_host => true,
+        :matching => :all,
+        :replace_response_host => false,
+      }
       instance_eval(&b) if block_given?
     end
 
     def call(env)
       rackreq = Rack::Request.new(env)
-      matcher = get_matcher(rackreq.fullpath, Rack::Proxy.extract_http_request_headers(rackreq.env), rackreq)
+      matcher = get_matcher(
+        rackreq.fullpath,
+        Rack::Proxy.extract_http_request_headers(rackreq.env),
+        rackreq,
+      )
       return @app.call(env) if matcher.nil?
 
       if @global_options[:newrelic_instrumentation]
-        action_name = "#{rackreq.path.gsub(/\/\d+/,'/:id').gsub(/^\//,'')}/#{rackreq.request_method}" # Rack::ReverseProxy/foo/bar#GET
+        # Rack::ReverseProxy/foo/bar#GET
+        action_path = rackreq.path.gsub(%r{/\d+}, "/:id").gsub(%r{^/}, "")
+        action_name = "#{action_path}/#{rackreq.request_method}"
         perform_action_with_newrelic_trace(:name => action_name, :request => rackreq) do
           proxy(env, rackreq, matcher)
         end
@@ -31,40 +50,43 @@ module RackReverseProxy
     private
 
     def proxy(env, source_request, matcher)
-      uri = matcher.get_uri(source_request.fullpath,env)
-      if uri.nil?
-        return @app.call(env)
-      end
+      uri = matcher.get_uri(source_request.fullpath, env)
+      return @app.call(env) if uri.nil?
+
       options = @global_options.dup.merge(matcher.options)
 
       # Initialize request
-      target_request = Net::HTTP.const_get(source_request.request_method.capitalize).new(uri.request_uri)
+      target_request = Net::HTTP.const_get(
+        source_request.request_method.capitalize,
+      ).new(uri.request_uri)
 
       # Setup headers
       target_request_headers = Rack::Proxy.extract_http_request_headers(source_request.env)
 
       if options[:preserve_host]
         if uri.port == uri.default_port
-          target_request_headers['HOST'] = uri.host
+          target_request_headers["HOST"] = uri.host
         else
-          target_request_headers['HOST'] = "#{uri.host}:#{uri.port}"
+          target_request_headers["HOST"] = "#{uri.host}:#{uri.port}"
         end
       end
 
       if options[:x_forwarded_host]
-        target_request_headers['X-Forwarded-Host'] = source_request.host
-        target_request_headers['X-Forwarded-Port'] = "#{source_request.port}"
+        target_request_headers["X-Forwarded-Host"] = source_request.host
+        target_request_headers["X-Forwarded-Port"] = "#{source_request.port}"
       end
 
       target_request.initialize_http_header(target_request_headers)
 
       # Basic auth
-      target_request.basic_auth options[:username], options[:password] if options[:username] and options[:password]
+      if options[:username] && options[:password]
+        target_request.basic_auth options[:username], options[:password]
+      end
 
       # Setup body
       if target_request.request_body_permitted? && source_request.body
         source_request.body.rewind
-        target_request.body_stream    = source_request.body
+        target_request.body_stream = source_request.body
       end
 
       target_request.content_length = source_request.content_length || 0
@@ -79,16 +101,18 @@ module RackReverseProxy
       target_response.use_ssl = "https" == uri.scheme
 
       # Let rack set the transfer-encoding header
-      response_headers = Rack::Utils::HeaderHash.new Rack::Proxy.normalize_headers(format_headers(target_response.headers))
-      response_headers.delete('Transfer-Encoding')
-      response_headers.delete('Status')
+      response_headers = Rack::Utils::HeaderHash.new(
+        Rack::Proxy.normalize_headers(format_headers(target_response.headers)),
+      )
+      response_headers.delete("Transfer-Encoding")
+      response_headers.delete("Status")
 
       # Replace the location header with the proxy domain
-      if response_headers['Location'] && options[:replace_response_host]
-        response_location = URI(response_headers['location'])
+      if response_headers["Location"] && options[:replace_response_host]
+        response_location = URI(response_headers["location"])
         response_location.host = source_request.host
         response_location.port = source_request.port
-        response_headers['Location'] = response_location.to_s
+        response_headers["Location"] = response_location.to_s
       end
 
       [target_response.status, response_headers, target_response.body]
@@ -102,26 +126,27 @@ module RackReverseProxy
       if matches.length < 1
         nil
       elsif matches.length > 1 && @global_options[:matching] != :first
-        raise Errors::AmbiguousMatch.new(path, matches)
+        fail Errors::AmbiguousMatch.new(path, matches)
       else
         matches.first
       end
     end
 
     def reverse_proxy_options(options)
-      @global_options=options
+      @global_options = options
     end
 
-    def reverse_proxy(matcher, url=nil, opts={})
-      raise Errors::GenericURI.new(url) if matcher.is_a?(String) && url.is_a?(String) && URI(url).class == URI::Generic
-      @matchers << Matcher.new(matcher,url,opts)
+    def reverse_proxy(matcher, url = nil, opts = {})
+      if matcher.is_a?(String) && url.is_a?(String) && URI(url).class == URI::Generic
+        fail Errors::GenericURI.new, url
+      end
+      @matchers << Matcher.new(matcher, url, opts)
     end
 
     def format_headers(headers)
-      headers.reduce({}) do |acc, (key, val)|
-        formated_key = key.split('-').map(&:capitalize).join('-')
+      headers.each_with_object({}) do |(key, val), acc|
+        formated_key = key.split("-").map(&:capitalize).join("-")
         acc[formated_key] = Array(val)
-        acc
       end
     end
   end

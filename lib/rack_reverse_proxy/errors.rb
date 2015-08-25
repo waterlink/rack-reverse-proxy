@@ -1,5 +1,6 @@
 module RackReverseProxy
   module Errors
+    # GenericURI indicates that url is too generic
     class GenericURI < Exception
       attr_reader :url
 
@@ -8,25 +9,27 @@ module RackReverseProxy
       end
 
       def to_s
-        %Q(Your URL "#{@url}" is too generic. Did you mean "http://#{@url}"?)
+        %(Your URL "#{@url}" is too generic. Did you mean "http://#{@url}"?)
       end
     end
 
+    # AmbiguousMatch indicates that path matched more than one endpoint
     class AmbiguousMatch < Exception
       attr_reader :path, :matches
+
       def initialize(path, matches)
         @path = path
         @matches = matches
       end
 
       def to_s
-        %Q(Path "#{path}" matched multiple endpoints: #{formatted_matches})
+        %(Path "#{path}" matched multiple endpoints: #{formatted_matches})
       end
 
       private
 
       def formatted_matches
-        matches.map {|matcher| matcher.to_s}.join(', ')
+        matches.map(&:to_s).join(", ")
       end
     end
   end

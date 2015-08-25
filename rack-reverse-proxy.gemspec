@@ -1,14 +1,31 @@
-lib = File.expand_path('../lib', __FILE__)
+lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'rack_reverse_proxy/version'
+require "rack_reverse_proxy/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "rack-reverse-proxy"
   spec.version       = RackReverseProxy::VERSION
-  spec.authors       = ["Jon Swope", "Ian Ehlert", "Roman Ernst", "Oleksii Fedorov"]
-  spec.email         = ["jaswope@gmail.com", "ehlertij@gmail.com", "rernst@farbenmeer.net", "waterlink000@gmail.com"]
-  spec.summary       = %q{A Simple Reverse Proxy for Rack}
-  spec.description   = %q{A Rack based reverse proxy for basic needs.  Useful for testing or in cases where webserver configuration is unavailable.}
+
+  spec.authors = [
+    "Jon Swope",
+    "Ian Ehlert",
+    "Roman Ernst",
+    "Oleksii Fedorov",
+  ]
+
+  spec.email = [
+    "jaswope@gmail.com",
+    "ehlertij@gmail.com",
+    "rernst@farbenmeer.net",
+    "waterlink000@gmail.com",
+  ]
+
+  spec.summary       = "A Simple Reverse Proxy for Rack"
+  spec.description   = <<eos
+A Rack based reverse proxy for basic needs.
+Useful for testing or in cases where webserver configuration is unavailable.
+eos
+
   spec.homepage      = "https://github.com/waterlink/rack-reverse-proxy"
   spec.license       = "MIT"
 
