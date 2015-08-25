@@ -16,7 +16,7 @@ module RackReverseProxy
 
     def initialize(app = nil, &b)
       @app = app || lambda { |_| [404, [], []] }
-      @matchers = []
+      @rules = []
       @global_options = {
         :preserve_host => true,
         :x_forwarded_host => true,
@@ -28,32 +28,32 @@ module RackReverseProxy
 
     def call(env)
       rackreq = Rack::Request.new(env)
-      matcher = get_matcher(
+      rule = get_rule(
         rackreq.fullpath,
         Rack::Proxy.extract_http_request_headers(rackreq.env),
         rackreq
       )
-      return @app.call(env) if matcher.nil?
+      return @app.call(env) if rule.nil?
 
       if @global_options[:newrelic_instrumentation]
         # Rack::ReverseProxy/foo/bar#GET
         action_path = rackreq.path.gsub(%r{/\d+}, "/:id").gsub(%r{^/}, "")
         action_name = "#{action_path}/#{rackreq.request_method}"
         perform_action_with_newrelic_trace(:name => action_name, :request => rackreq) do
-          proxy(env, rackreq, matcher)
+          proxy(env, rackreq, rule)
         end
       else
-        proxy(env, rackreq, matcher)
+        proxy(env, rackreq, rule)
       end
     end
 
     private
 
-    def proxy(env, source_request, matcher)
-      uri = matcher.get_uri(source_request.fullpath, env)
+    def proxy(env, source_request, rule)
+      uri = rule.get_uri(source_request.fullpath, env)
       return @app.call(env) if uri.nil?
 
-      options = @global_options.dup.merge(matcher.options)
+      options = @global_options.dup.merge(rule.options)
 
       # Initialize request
       target_request = Net::HTTP.const_get(
@@ -118,9 +118,9 @@ module RackReverseProxy
       [target_response.status, response_headers, target_response.body]
     end
 
-    def get_matcher(path, headers, rackreq)
-      matches = @matchers.select do |matcher|
-        matcher.match?(path, headers, rackreq)
+    def get_rule(path, headers, rackreq)
+      matches = @rules.select do |rule|
+        rule.proxy?(path, headers, rackreq)
       end
 
       if matches.length < 1
@@ -136,11 +136,11 @@ module RackReverseProxy
       @global_options = options
     end
 
-    def reverse_proxy(matcher, url = nil, opts = {})
-      if matcher.is_a?(String) && url.is_a?(String) && URI(url).class == URI::Generic
+    def reverse_proxy(rule, url = nil, opts = {})
+      if rule.is_a?(String) && url.is_a?(String) && URI(url).class == URI::Generic
         fail Errors::GenericURI.new, url
       end
-      @matchers << Matcher.new(matcher, url, opts)
+      @rules << Rule.new(rule, url, opts)
     end
 
     def format_headers(headers)

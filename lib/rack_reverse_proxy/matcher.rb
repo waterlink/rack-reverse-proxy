@@ -3,8 +3,8 @@ module RackReverseProxy
   # rubocop:disable Metrics/MethodLength
   # rubocop:disable Metrics/AbcSize
 
-  # Matcher understands if specific url matches encapsulated rule or not
-  class Matcher
+  # Rule understands which urls need to be proxied
+  class Rule
     def initialize(matcher, url = nil, options = {})
       @default_url = url
       @url = url
@@ -15,13 +15,13 @@ module RackReverseProxy
       elsif matcher.respond_to?(:match)
         @matcher = matcher
       else
-        fail ArgumentError, "Invalid Matcher for reverse_proxy"
+        fail ArgumentError, "Invalid Rule for reverse_proxy"
       end
     end
 
     attr_reader :matcher, :url, :default_url, :options
 
-    def match?(path, *args)
+    def proxy?(path, *args)
       match_path(path, *args) ? true : false
     end
 
