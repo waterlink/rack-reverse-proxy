@@ -9,6 +9,9 @@ rvm:
   - jruby-19mode
   - rbx
 
+before_install:
+  - gem install bundler
+
 bundler_args: --without development
 
 script:
