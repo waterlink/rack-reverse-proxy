@@ -13,3 +13,6 @@ Style/Lambda:
 
 Style/TrailingComma:
   EnforcedStyleForMultiline: no_comma
+
+Style/EachWithObject:
+  Enabled: false

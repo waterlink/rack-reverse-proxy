@@ -144,9 +144,10 @@ module RackReverseProxy
     end
 
     def format_headers(headers)
-      headers.each_with_object({}) do |(key, val), acc|
+      headers.inject({}) do |acc, (key, val)|
         formated_key = key.split("-").map(&:capitalize).join("-")
         acc[formated_key] = Array(val)
+        acc
       end
     end
   end
