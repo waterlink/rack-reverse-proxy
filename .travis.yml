@@ -9,5 +9,8 @@ rvm:
   - jruby-19mode
   - rbx
 
-script: bundle exec rspec
 bundler_args: --without development
+
+script:
+  - bundle exec rspec
+  - script/rubocop
