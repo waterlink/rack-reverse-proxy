@@ -18,7 +18,7 @@ RSpec.describe Rack::ReverseProxy do
       :verify_mode= => nil,
       :headers => {},
       :status => 200,
-      :body => "OK",
+      :body => "OK"
     )
   end
 
@@ -50,7 +50,7 @@ RSpec.describe Rack::ReverseProxy do
 
     it "parses the headers as a Hash with values of type String" do
       stub_request(:get, "http://example.com/test").to_return(
-        :headers => { "cache-control" => "max-age=300, public" },
+        :headers => { "cache-control" => "max-age=300, public" }
       )
       get "/test"
       expect(last_response.headers["cache-control"]).to be_an_instance_of(String)
@@ -68,8 +68,8 @@ RSpec.describe Rack::ReverseProxy do
       get "/test/stuff"
       expect(
         a_request(:get, "http://example.com/test/stuff").with(
-          :headers => { "Host" => "example.com" },
-        ),
+          :headers => { "Host" => "example.com" }
+        )
       ).to have_been_made
     end
 
@@ -78,8 +78,8 @@ RSpec.describe Rack::ReverseProxy do
       get "/test/stuff"
       expect(
         a_request(:get, "http://example.com/test/stuff").with(
-          :headers => { "X-Forwarded-Host" => "example.org" },
-        ),
+          :headers => { "X-Forwarded-Host" => "example.org" }
+        )
       ).to have_been_made
     end
 
@@ -96,7 +96,7 @@ RSpec.describe Rack::ReverseProxy do
 
     it "formats the headers correctly to avoid duplicates" do
       stub_request(:get, "http://example.com/2test").to_return(
-        :headers => { :date => "Wed, 22 Jul 2015 11:27:21 GMT" },
+        :headers => { :date => "Wed, 22 Jul 2015 11:27:21 GMT" }
       )
 
       get "/2test"
@@ -109,7 +109,7 @@ RSpec.describe Rack::ReverseProxy do
     it "formats the headers with dashes correctly" do
       stub_request(:get, "http://example.com/2test").to_return(
         :status => 301,
-        :headers => { :status => "301 Moved Permanently", :"x-additional-info" => "something" },
+        :headers => { :status => "301 Moved Permanently", :"x-additional-info" => "something" }
       )
 
       get "/2test"
@@ -131,8 +131,8 @@ RSpec.describe Rack::ReverseProxy do
         get "/test/stuff"
         expect(
           a_request(:get, "http://example.com:8080/test/stuff").with(
-            :headers => { "Host" => "example.com:8080" },
-          ),
+            :headers => { "Host" => "example.com:8080" }
+          )
         ).to have_been_made
       end
     end
@@ -150,8 +150,8 @@ RSpec.describe Rack::ReverseProxy do
 
         expect(
           a_request(:get, "http://example.com/test/stuff").with(
-            :headers => { "Host" => "example.com" },
-          ),
+            :headers => { "Host" => "example.com" }
+          )
         ).not_to have_been_made
 
         expect(a_request(:get, "http://example.com/test/stuff")).to have_been_made
@@ -171,8 +171,8 @@ RSpec.describe Rack::ReverseProxy do
         get "/test/stuff"
         expect(
           a_request(:get, "http://example.com/test/stuff").with(
-            :headers => { "X-Forwarded-Host" => "example.org" },
-          ),
+            :headers => { "X-Forwarded-Host" => "example.org" }
+          )
         ).not_to have_been_made
         expect(a_request(:get, "http://example.com/test/stuff")).to have_been_made
       end
@@ -217,7 +217,7 @@ RSpec.describe Rack::ReverseProxy do
 
       it "makes request with basic auth" do
         stub_request(:get, "http://joe:shmoe@example.com/test/stuff").to_return(
-          :body => "secured content",
+          :body => "secured content"
         )
         get "/test/stuff"
         expect(last_response.body).to eq("secured content")
@@ -233,7 +233,7 @@ RSpec.describe Rack::ReverseProxy do
 
       it "replaces the location response header" do
         stub_request(:get, "http://example.com/test/stuff").to_return(
-          :headers => { "location" => "http://test.com/bar" },
+          :headers => { "location" => "http://test.com/bar" }
         )
         get "http://example.com/test/stuff"
         expect(last_response.headers["location"]).to eq("http://example.com/bar")
@@ -241,7 +241,7 @@ RSpec.describe Rack::ReverseProxy do
 
       it "keeps the port of the location" do
         stub_request(:get, "http://example.com/test/stuff").to_return(
-          :headers => { "location" => "http://test.com/bar" },
+          :headers => { "location" => "http://test.com/bar" }
         )
         get "http://example.com:3000/test/stuff"
         expect(last_response.headers["location"]).to eq("http://example.com:3000/bar")
@@ -302,7 +302,7 @@ RSpec.describe Rack::ReverseProxy do
 
       it "makes a secure request" do
         stub_request(:get, "https://example.com/test/stuff").to_return(
-          :body => "Proxied Secure App",
+          :body => "Proxied Secure App"
         )
         get "/test/stuff"
         expect(last_response.body).to eq("Proxied Secure App")
@@ -313,8 +313,8 @@ RSpec.describe Rack::ReverseProxy do
         get "/test/stuff"
         expect(
           a_request(:get, "https://example.com/test/stuff").with(
-            :headers => { "Host" => "example.com" },
-          ),
+            :headers => { "Host" => "example.com" }
+          )
         ).to have_been_made
       end
     end
@@ -331,8 +331,8 @@ RSpec.describe Rack::ReverseProxy do
         get "/test/stuff"
         expect(
           a_request(:get, "https://example.com:8443/test/stuff").with(
-            :headers => { "Host" => "example.com:8443" },
-          ),
+            :headers => { "Host" => "example.com:8443" }
+          )
         ).to have_been_made
       end
     end
@@ -375,7 +375,7 @@ RSpec.describe Rack::ReverseProxy do
         describe "and using method #{method}" do
           it "forwards the correct request" do
             stub_request(method.to_sym, "http://example.com/test").to_return(
-              :body => "Proxied App for #{method}",
+              :body => "Proxied App for #{method}"
             )
             send(method, "/test")
             expect(last_response.body).to eq("Proxied App for #{method}")
@@ -385,7 +385,7 @@ RSpec.describe Rack::ReverseProxy do
             it "forwards the request payload" do
               stub_request(
                 method.to_sym,
-                "http://example.com/test",
+                "http://example.com/test"
               ).to_return { |req| { :body => req.body } }
               send(method, "/test", :test => "test")
               expect(last_response.body).to eq("test=test")
@@ -467,7 +467,7 @@ RSpec.describe Rack::ReverseProxy do
 
       it "proxies requests when a pattern is matched" do
         stub_request(:get, "http://users-example.com/users?user=omer").to_return(
-          :body => "User App",
+          :body => "User App"
         )
 
         get "/test", :user => "mark"
@@ -500,7 +500,7 @@ RSpec.describe Rack::ReverseProxy do
 
       it "proxies requests when a pattern is matched and correct headers are passed" do
         stub_request(:get, "http://example.com/test").to_return(
-          :body => "Proxied App with Headers",
+          :body => "Proxied App with Headers"
         )
         get "/test", {}, "HTTP_ACCEPT" => "foo.bar"
         expect(last_response.body).to eq("Proxied App with Headers")
@@ -508,7 +508,7 @@ RSpec.describe Rack::ReverseProxy do
 
       it "does not proxy requests when a pattern is matched and incorrect headers are passed" do
         stub_request(:get, "http://example.com/test").to_return(
-          :body => "Proxied App with Headers",
+          :body => "Proxied App with Headers"
         )
         get "/test", {}, "HTTP_ACCEPT" => "bar.foo"
         expect(last_response.body).not_to eq("Proxied App with Headers")

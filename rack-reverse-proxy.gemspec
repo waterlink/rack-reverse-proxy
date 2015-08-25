@@ -10,14 +10,14 @@ Gem::Specification.new do |spec|
     "Jon Swope",
     "Ian Ehlert",
     "Roman Ernst",
-    "Oleksii Fedorov",
+    "Oleksii Fedorov"
   ]
 
   spec.email = [
     "jaswope@gmail.com",
     "ehlertij@gmail.com",
     "rernst@farbenmeer.net",
-    "waterlink000@gmail.com",
+    "waterlink000@gmail.com"
   ]
 
   spec.summary       = "A Simple Reverse Proxy for Rack"

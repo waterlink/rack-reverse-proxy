@@ -21,7 +21,7 @@ module RackReverseProxy
         :preserve_host => true,
         :x_forwarded_host => true,
         :matching => :all,
-        :replace_response_host => false,
+        :replace_response_host => false
       }
       instance_eval(&b) if block_given?
     end
@@ -31,7 +31,7 @@ module RackReverseProxy
       matcher = get_matcher(
         rackreq.fullpath,
         Rack::Proxy.extract_http_request_headers(rackreq.env),
-        rackreq,
+        rackreq
       )
       return @app.call(env) if matcher.nil?
 
@@ -57,7 +57,7 @@ module RackReverseProxy
 
       # Initialize request
       target_request = Net::HTTP.const_get(
-        source_request.request_method.capitalize,
+        source_request.request_method.capitalize
       ).new(uri.request_uri)
 
       # Setup headers
@@ -102,7 +102,7 @@ module RackReverseProxy
 
       # Let rack set the transfer-encoding header
       response_headers = Rack::Utils::HeaderHash.new(
-        Rack::Proxy.normalize_headers(format_headers(target_response.headers)),
+        Rack::Proxy.normalize_headers(format_headers(target_response.headers))
       )
       response_headers.delete("Transfer-Encoding")
       response_headers.delete("Status")
