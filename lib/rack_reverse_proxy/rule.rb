@@ -106,6 +106,8 @@ module RackReverseProxy
 
     # Matches represents collection of matched objects for Rule
     class Matches
+      # rubocop:disable Metrics/ParameterLists
+
       # FIXME: eliminate :url, :accept_headers, :has_custom_url
       def initialize(spec, url, path, accept_headers, has_custom_url, headers, rackreq, *_)
         @spec = spec
