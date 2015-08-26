@@ -17,9 +17,10 @@ gem "rack-reverse-proxy", require: "rack/reverse_proxy"
 ```
 
 ## Usage
-Matchers can be a regex or a string. If a regex is used, you can use the subcaptures in your forwarding url by denoting them with a `$`.
 
-Right now if more than one matcher matches any given route, it throws an exception for an ambiguous match.  This will probably change later. If no match is found, the call is forwarded to your application.
+Rules can be a regex or a string. If a regex is used, you can use the subcaptures in your forwarding url by denoting them with a `$`.
+
+Right now if more than one rule matches any given route, it throws an exception for an ambiguous match.  This will probably change later. If no match is found, the call is forwarded to your application.
 
 Below is an example for configuring the middleware:
 
@@ -43,7 +44,8 @@ end
 run app
 ```
 
-reverse_proxy_options sets global options for all reverse proxies. Available options are:
+`reverse_proxy_options` sets global options for all reverse proxies. Available options are:
+
 * `:preserve_host` Set to false to omit Host headers
 * `:username` username for basic auth
 * `:password` password for basic auth
