@@ -50,7 +50,12 @@ module RackReverseProxy
     private
 
     def proxy(env, source_request, rule)
-      uri = rule.get_uri(source_request.fullpath, env)
+      uri = rule.get_uri(
+        source_request.fullpath,
+        env,
+        Rack::Proxy.extract_http_request_headers(source_request.env),
+        source_request
+      )
       return @app.call(env) if uri.nil?
 
       options = @global_options.dup.merge(rule.options)

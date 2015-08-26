@@ -5,43 +5,44 @@ module RackReverseProxy
     attr_reader :options
 
     def initialize(spec, url = nil, options = {})
-      @custom_url = url.nil?
+      @has_custom_url = url.nil?
       @url = url
       @options = options
       @spec = build_matcher(spec)
     end
 
     def proxy?(path, *args)
-      _matches(path, *args).count > 0
+      matches(path, *args).any?
     end
 
-    def get_uri(path, env)
-      Candidate.new(self, url, custom_url, path, env).build_uri
+    def get_uri(path, env, *args)
+      Candidate.new(
+        self,
+        has_custom_url,
+        path,
+        env,
+        matches(path, *args)
+      ).build_uri
     end
 
     def to_s
       %("#{spec}" => "#{url}")
     end
 
-    # @private
-    def _matches(path, *args)
-      headers = args[0]
-      rackreq = args[1]
-      arity = spec.method(:match).arity
-      if arity == -1
-        match = spec.match(path)
-      else
-        params = [path, (@options[:accept_headers] ? headers : nil), rackreq]
-        match = spec.match(*params[0..(arity - 1)])
-      end
-      # FIXME: This state mutation is very confusing
-      @url = match.url(path) if match && custom_url
-      Array(match)
-    end
-
     private
 
-    attr_reader :spec, :url, :custom_url
+    attr_reader :spec, :url, :has_custom_url
+
+    def matches(path, *args)
+      Matches.new(
+        spec,
+        url,
+        path,
+        options[:accept_headers],
+        has_custom_url,
+        *args
+      )
+    end
 
     def build_matcher(spec)
       return /^#{spec}/ if spec.is_a?(String)
@@ -51,13 +52,14 @@ module RackReverseProxy
 
     # Candidate represents a request being matched
     class Candidate
-      def initialize(rule, url, custom_url, path, env)
+      def initialize(rule, has_custom_url, path, env, matches)
         @rule = rule
         @env = env
         @path = path
-        @custom_url = custom_url
+        @has_custom_url = has_custom_url
+        @matches = matches
 
-        @url = evaluate(url)
+        @url = evaluate(matches.custom_url)
       end
 
       def build_uri
@@ -67,11 +69,11 @@ module RackReverseProxy
 
       private
 
-      attr_reader :rule, :url, :custom_url, :path, :env
+      attr_reader :rule, :url, :has_custom_url, :path, :env, :matches
 
       def raw_uri
         return substitute_matches if with_substitutions?
-        return just_uri if custom_url
+        return just_uri if has_custom_url
         uri_with_path
       end
 
@@ -98,13 +100,74 @@ module RackReverseProxy
       end
 
       def substitute_matches
-        matches.each_with_index.inject(url) do |url, (match, i)|
-          url.gsub("$#{i}", match)
+        matches.substitute(url)
+      end
+    end
+
+    # Matches represents collection of matched objects for Rule
+    class Matches
+      # FIXME: eliminate :url, :accept_headers, :has_custom_url
+      def initialize(spec, url, path, accept_headers, has_custom_url, headers, rackreq, *_)
+        @spec = spec
+        @url = url
+        @path = path
+        @has_custom_url = has_custom_url
+        @rackreq = rackreq
+
+        @headers = headers if accept_headers
+        @spec_arity = spec.method(:match).arity
+      end
+
+      def any?
+        found.any?
+      end
+
+      def custom_url
+        return url unless has_custom_url
+        found.map do |match|
+          match.url(path)
+        end.first
+      end
+
+      def substitute(url)
+        found.each_with_index.inject(url) do |acc, (match, i)|
+          acc.gsub("$#{i}", match)
         end
       end
 
-      def matches
-        rule._matches(path)
+      private
+
+      attr_reader :spec, :url, :path, :headers, :rackreq, :spec_arity, :has_custom_url
+
+      def found
+        @_found ||= find_matches
+      end
+
+      def find_matches
+        Array(
+          spec.match(*spec_params)
+        )
+      end
+
+      def spec_params
+        @_spec_params ||= _spec_params
+      end
+
+      def _spec_params
+        [
+          path,
+          headers,
+          rackreq
+        ][0...spec_param_count]
+      end
+
+      def spec_param_count
+        @_spec_param_count ||= _spec_param_count
+      end
+
+      def _spec_param_count
+        return 1 if spec_arity == -1
+        spec_arity
       end
     end
   end
