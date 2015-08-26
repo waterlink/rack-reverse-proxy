@@ -64,7 +64,7 @@ module RackReverseProxy
 
       def build_uri
         return nil unless url
-        URI(raw_uri)
+        raw_uri
       end
 
       private
@@ -100,7 +100,7 @@ module RackReverseProxy
       end
 
       def substitute_matches
-        matches.substitute(url)
+        URI(matches.substitute(url))
       end
     end
 
