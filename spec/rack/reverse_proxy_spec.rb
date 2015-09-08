@@ -120,10 +120,12 @@ RSpec.describe Rack::ReverseProxy do
     end
 
     it "the response header includes content-length" do
-      body = 'this is the test body'
-      stub_request(:any, 'example.com/test/stuff').to_return(:body => body, :headers => {'Content-Length' => '10'})
-      get '/test/stuff'
-      expect(last_response.headers['Content-Length']).to eq(body.length.to_s)
+      body = "this is the test body"
+      stub_request(:any, "example.com/test/stuff").to_return(
+        :body => body, :headers => { "Content-Length" => "10" }
+      )
+      get "/test/stuff"
+      expect(last_response.headers["Content-Length"]).to eq(body.length.to_s)
     end
 
     describe "with non-default port" do
