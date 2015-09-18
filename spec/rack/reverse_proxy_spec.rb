@@ -302,7 +302,7 @@ RSpec.describe Rack::ReverseProxy do
       def app
         Rack::ReverseProxy.new(dummy_app) do
           reverse_proxy "/test", "http://example1.com/",
-            :force_ssl => true, :replace_response_host => true
+                        :force_ssl => true, :replace_response_host => true
         end
       end
 

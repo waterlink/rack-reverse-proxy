@@ -61,10 +61,10 @@ module RackReverseProxy
       options = @global_options.dup.merge(rule.options)
 
       if options[:force_ssl] && options[:replace_response_host] &&
-         source_request.scheme == 'http'
+         source_request.scheme == "http"
         rewrite_uri(uri, source_request)
-        uri.scheme = 'https'
-        return [301, {'Location' => uri.to_s}, '']
+        uri.scheme = "https"
+        return [301, { "Location" => uri.to_s }, ""]
       end
 
       # Initialize request
@@ -162,16 +162,14 @@ module RackReverseProxy
       end
     end
 
-    def default_port_for_scheme?(scheme, port)
-      scheme == 'http' && port == 80 || scheme == 'https' && port == 443
+    def request_default_port?(req)
+      [["http", 80], ["https", 443]].include?([req.scheme, req.port])
     end
 
-    def rewrite_uri(rewritten, original)
-      rewritten.scheme = original.scheme
-      rewritten.host   = original.host
-      unless default_port_for_scheme?(original.scheme, original.port)
-        rewritten.port = original.port
-      end
+    def rewrite_uri(uri, original_req)
+      uri.scheme = original_req.scheme
+      uri.host   = original_req.host
+      uri.port   = original_req.port unless request_default_port?(original_req)
     end
   end
 end
