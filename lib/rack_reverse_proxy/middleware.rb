@@ -60,6 +60,13 @@ module RackReverseProxy
 
       options = @global_options.dup.merge(rule.options)
 
+      if options[:force_ssl] && options[:replace_response_host] &&
+         source_request.scheme == "http"
+        rewrite_uri(uri, source_request)
+        uri.scheme = "https"
+        return [301, { "Location" => uri.to_s }, ""]
+      end
+
       # Initialize request
       target_request = Net::HTTP.const_get(
         source_request.request_method.capitalize
@@ -115,8 +122,7 @@ module RackReverseProxy
       # Replace the location header with the proxy domain
       if response_headers["Location"] && options[:replace_response_host]
         response_location = URI(response_headers["location"])
-        response_location.host = source_request.host
-        response_location.port = source_request.port
+        rewrite_uri(response_location, source_request)
         response_headers["Location"] = response_location.to_s
       end
 
@@ -154,6 +160,16 @@ module RackReverseProxy
         acc[formated_key] = Array(val)
         acc
       end
+    end
+
+    def request_default_port?(req)
+      [["http", 80], ["https", 443]].include?([req.scheme, req.port])
+    end
+
+    def rewrite_uri(uri, original_req)
+      uri.scheme = original_req.scheme
+      uri.host   = original_req.host
+      uri.port   = original_req.port unless request_default_port?(original_req)
     end
   end
 end

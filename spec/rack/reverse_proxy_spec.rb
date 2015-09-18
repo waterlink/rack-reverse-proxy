@@ -255,6 +255,16 @@ RSpec.describe Rack::ReverseProxy do
         get "http://example.com:3000/test/stuff"
         expect(last_response.headers["location"]).to eq("http://example.com:3000/bar")
       end
+
+      it "doesn't keep the port when it's default for the protocol" do
+        # webmock doesn't allow to stub an https URI, but this is enough to
+        # reply to the https code path
+        stub_request(:get, "http://example.com/test/stuff").to_return(
+          :headers => { "location" => "http://test.com/bar" }
+        )
+        get "https://example.com/test/stuff"
+        expect(last_response.headers["location"]).to eq("https://example.com/bar")
+      end
     end
 
     describe "with ambiguous routes and all matching" do
@@ -285,6 +295,27 @@ RSpec.describe Rack::ReverseProxy do
         stub_request(:get, "http://example1.com/test").to_return(:body => "Proxied App")
         get "/test"
         expect(last_response.body).to eq("Proxied App")
+      end
+    end
+
+    describe "with force ssl turned on" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy "/test", "http://example1.com/",
+                        :force_ssl => true, :replace_response_host => true
+        end
+      end
+
+      it "redirects to the ssl version when requesting non-ssl" do
+        stub_request(:get, "http://example1.com/test/stuff").to_return(:body => "proxied")
+        get "http://example.com/test/stuff"
+        expect(last_response.headers["Location"]).to eq("https://example.com/test/stuff")
+      end
+
+      it "does nothing when already ssl" do
+        stub_request(:get, "http://example1.com/test/stuff").to_return(:body => "proxied")
+        get "https://example.com/test/stuff"
+        expect(last_response.body).to eq("proxied")
       end
     end
 

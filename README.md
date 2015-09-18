@@ -51,6 +51,7 @@ run app
 * `:password` password for basic auth
 * `:matching` is a global only option, if set to :first the first matched url will be requested (no ambigous error). Default: :all.
 * `:timeout` seconds to timout the requests
+* `:force_ssl` redirects to ssl version, if not already using it (requires `:replace_response_host`). Default: false.
 
 ### Sample usage in a Ruby on Rails app
 
