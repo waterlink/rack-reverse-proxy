@@ -255,6 +255,16 @@ RSpec.describe Rack::ReverseProxy do
         get "http://example.com:3000/test/stuff"
         expect(last_response.headers["location"]).to eq("http://example.com:3000/bar")
       end
+
+      it "doesn't keep the port when it's default for the protocol" do
+        # webmock doesn't allow to stub an https URI, but this is enough to
+        # reply to the https code path
+        stub_request(:get, "http://example.com/test/stuff").to_return(
+          :headers => { "location" => "http://test.com/bar" }
+        )
+        get "https://example.com/test/stuff"
+        expect(last_response.headers["location"]).to eq("https://example.com/bar")
+      end
     end
 
     describe "with ambiguous routes and all matching" do

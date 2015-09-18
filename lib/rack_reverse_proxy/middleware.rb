@@ -115,8 +115,11 @@ module RackReverseProxy
       # Replace the location header with the proxy domain
       if response_headers["Location"] && options[:replace_response_host]
         response_location = URI(response_headers["location"])
-        response_location.host = source_request.host
-        response_location.port = source_request.port
+        response_location.scheme = source_request.scheme
+        response_location.host   = source_request.host
+        unless default_port_for_scheme?(source_request.scheme, source_request.port)
+          response_location.port = source_request.port
+        end
         response_headers["Location"] = response_location.to_s
       end
 
@@ -154,6 +157,10 @@ module RackReverseProxy
         acc[formated_key] = Array(val)
         acc
       end
+    end
+
+    def default_port_for_scheme?(scheme, port)
+      scheme == 'http' && port == 80 || scheme == 'https' && port == 443
     end
   end
 end
