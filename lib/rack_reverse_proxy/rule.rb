@@ -148,7 +148,7 @@ module RackReverseProxy
 
       def find_matches
         Array(
-          spec.public_send(spec_match_method_name, *spec_params)
+          spec.send(spec_match_method_name, *spec_params)
         )
       end
 
