@@ -435,6 +435,27 @@ RSpec.describe Rack::ReverseProxy do
       end
     end
 
+    describe "with a matching lambda" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy lambda { |path| path.match(%r{^/test}) }, "http://lambda.example.org"
+        end
+      end
+
+      it "forwards requests to the calling app when path is not matched" do
+        get "/users"
+        expect(last_response).to be_ok
+        expect(last_response.body).to eq("Dummy App")
+      end
+
+      it "proxies requests when a pattern is matched" do
+        stub_request(:get, "http://lambda.example.org/test").to_return(:body => "Proxied App")
+
+        get "/test"
+        expect(last_response.body).to eq("Proxied App")
+      end
+    end
+
     describe "with a matching class" do
       #:nodoc:
       class Matcher

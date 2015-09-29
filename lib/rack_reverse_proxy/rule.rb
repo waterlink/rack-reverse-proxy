@@ -47,6 +47,7 @@ module RackReverseProxy
     def build_matcher(spec)
       return /^#{spec}/ if spec.is_a?(String)
       return spec if spec.respond_to?(:match)
+      return spec if spec.respond_to?(:call)
       fail ArgumentError, "Invalid Rule for reverse_proxy"
     end
 
@@ -117,7 +118,7 @@ module RackReverseProxy
         @rackreq = rackreq
 
         @headers = headers if accept_headers
-        @spec_arity = spec.method(:match).arity
+        @spec_arity = spec.method(spec_match_method_name).arity
       end
 
       def any?
@@ -147,7 +148,7 @@ module RackReverseProxy
 
       def find_matches
         Array(
-          spec.match(*spec_params)
+          spec.public_send(spec_match_method_name, *spec_params)
         )
       end
 
@@ -170,6 +171,11 @@ module RackReverseProxy
       def _spec_param_count
         return 1 if spec_arity == -1
         spec_arity
+      end
+
+      def spec_match_method_name
+        return :match if spec.respond_to?(:match)
+        :call
       end
     end
   end
