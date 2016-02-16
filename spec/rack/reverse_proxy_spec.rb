@@ -460,7 +460,7 @@ RSpec.describe Rack::ReverseProxy do
       #:nodoc:
       class Matcher
         def self.match(path)
-          return unless path.match(%r{^/(test|users)})
+          return unless path =~ %r{^/(test|users)}
           Matcher.new
         end
 
@@ -504,7 +504,7 @@ RSpec.describe Rack::ReverseProxy do
         end
 
         def self.match(path, _headers, rackreq)
-          return nil unless path.match(%r{^/(test|users)})
+          return nil unless path =~ %r{^/(test|users)}
           RequestMatcher.new(rackreq)
         end
 

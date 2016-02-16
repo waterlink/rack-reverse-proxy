@@ -7,7 +7,7 @@ module RackReverseProxy
   # RoundTrip represents one request-response made by rack-reverse-proxy
   # middleware.
   class RoundTrip
-    def initialize(app, env, global_options, rules, response_builder_klass=ResponseBuilder)
+    def initialize(app, env, global_options, rules, response_builder_klass = ResponseBuilder)
       @app = app
       @env = env
       @global_options = global_options
@@ -92,7 +92,7 @@ module RackReverseProxy
     def set_forwarded_host
       return unless options[:x_forwarded_host]
       target_request_headers["X-Forwarded-Host"] = source_request.host
-      target_request_headers["X-Forwarded-Port"] = "#{source_request.port}"
+      target_request_headers["X-Forwarded-Port"] = source_request.port.to_s
     end
 
     def initialize_http_header
@@ -253,7 +253,7 @@ module RackReverseProxy
 
     def non_ambiguous_match
       return unless ambiguous_match?
-      fail Errors::AmbiguousMatch.new(path, matches)
+      raise Errors::AmbiguousMatch.new(path, matches)
     end
 
     def ambiguous_match?

@@ -1,8 +1,10 @@
 module RackReverseProxy
+  # ResponseBuilder knows target response building process
   class ResponseBuilder
     def initialize(target_request, uri, options)
-      @target_request, @uri, @options =
-        target_request, uri, options
+      @target_request = target_request
+      @uri = uri
+      @options = options
     end
 
     def fetch
@@ -42,7 +44,7 @@ module RackReverseProxy
     end
 
     def verify_mode?
-      !!options[:verify_mode]
+      options.key?(:verify_mode)
     end
 
     def target_response
