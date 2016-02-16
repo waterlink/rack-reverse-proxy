@@ -11,7 +11,10 @@ Style/HashSyntax:
 Style/Lambda:
   Enabled: false
 
-Style/TrailingComma:
+Style/TrailingCommaInLiteral:
+  EnforcedStyleForMultiline: no_comma
+
+Style/TrailingCommaInArguments:
   EnforcedStyleForMultiline: no_comma
 
 Style/EachWithObject:
