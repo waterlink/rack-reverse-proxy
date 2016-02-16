@@ -32,7 +32,7 @@ module RackReverseProxy
 
     def reverse_proxy(rule, url = nil, opts = {})
       if rule.is_a?(String) && url.is_a?(String) && URI(url).class == URI::Generic
-        fail Errors::GenericURI.new, url
+        raise Errors::GenericURI.new, url
       end
       @rules << Rule.new(rule, url, opts)
     end

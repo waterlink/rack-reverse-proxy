@@ -48,7 +48,7 @@ module RackReverseProxy
       return /^#{spec}/ if spec.is_a?(String)
       return spec if spec.respond_to?(:match)
       return spec if spec.respond_to?(:call)
-      fail ArgumentError, "Invalid Rule for reverse_proxy"
+      raise ArgumentError, "Invalid Rule for reverse_proxy"
     end
 
     # Candidate represents a request being matched

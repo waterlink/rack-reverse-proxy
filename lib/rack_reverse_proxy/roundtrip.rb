@@ -1,3 +1,5 @@
+require "rack_reverse_proxy/response_builder"
+
 module RackReverseProxy
   # FIXME: Enable them and fix issues during refactoring
   # rubocop:disable Metrics/ClassLength
@@ -5,11 +7,12 @@ module RackReverseProxy
   # RoundTrip represents one request-response made by rack-reverse-proxy
   # middleware.
   class RoundTrip
-    def initialize(app, env, global_options, rules)
+    def initialize(app, env, global_options, rules, response_builder_klass = ResponseBuilder)
       @app = app
       @env = env
       @global_options = global_options
       @rules = rules
+      @response_builder_klass = response_builder_klass
     end
 
     def call
@@ -20,7 +23,7 @@ module RackReverseProxy
 
     private
 
-    attr_reader :app, :env, :global_options, :rules
+    attr_reader :app, :env, :global_options, :rules, :response_builder_klass
 
     def new_relic?
       global_options[:newrelic_instrumentation]
@@ -89,7 +92,7 @@ module RackReverseProxy
     def set_forwarded_host
       return unless options[:x_forwarded_host]
       target_request_headers["X-Forwarded-Host"] = source_request.host
-      target_request_headers["X-Forwarded-Port"] = "#{source_request.port}"
+      target_request_headers["X-Forwarded-Port"] = source_request.port.to_s
     end
 
     def initialize_http_header
@@ -133,25 +136,11 @@ module RackReverseProxy
     end
 
     def target_response
-      @_target_response ||= Rack::HttpStreamingResponse.new(
+      @_target_response ||= response_builder_klass.new(
         target_request,
-        uri.host,
-        uri.port
-      )
-    end
-
-    def set_read_timeout
-      return unless read_timeout?
-      target_response.read_timeout = options[:timeout]
-    end
-
-    def read_timeout?
-      options[:timeout].to_i > 0
-    end
-
-    def auto_use_ssl
-      return unless "https" == uri.scheme
-      target_response.use_ssl = true
+        uri,
+        options
+      ).fetch
     end
 
     def response_headers
@@ -180,7 +169,7 @@ module RackReverseProxy
     end
 
     def response_location
-      @_response_location ||= URI(response_headers["location"])
+      @_response_location ||= URI(response_headers["Location"])
     end
 
     def need_replace_location?
@@ -197,9 +186,7 @@ module RackReverseProxy
       set_content_type
     end
 
-    def setup_response
-      set_read_timeout
-      auto_use_ssl
+    def setup_response_headers
       replace_location_header
     end
 
@@ -212,7 +199,7 @@ module RackReverseProxy
       return https_redirect if need_https_redirect?
 
       setup_request
-      setup_response
+      setup_response_headers
 
       rack_response
     end
@@ -266,7 +253,7 @@ module RackReverseProxy
 
     def non_ambiguous_match
       return unless ambiguous_match?
-      fail Errors::AmbiguousMatch.new(path, matches)
+      raise Errors::AmbiguousMatch.new(path, matches)
     end
 
     def ambiguous_match?
