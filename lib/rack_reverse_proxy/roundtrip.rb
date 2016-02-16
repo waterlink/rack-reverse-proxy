@@ -77,7 +77,6 @@ module RackReverseProxy
     end
 
     def preserve_host
-      p options
       return unless options[:preserve_host]
       target_request_headers["HOST"] = host_header
     end
