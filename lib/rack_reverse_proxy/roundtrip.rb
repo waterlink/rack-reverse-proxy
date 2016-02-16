@@ -136,9 +136,11 @@ module RackReverseProxy
     end
 
     def target_response
-      @_target_response ||= response_builder_klass
-        .new(target_request, uri, options)
-        .fetch
+      @_target_response ||= response_builder_klass.new(
+        target_request,
+        uri,
+        options
+      ).fetch
     end
 
     def response_headers
