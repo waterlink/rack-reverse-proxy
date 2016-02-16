@@ -52,6 +52,7 @@ run app
 * `:matching` is a global only option, if set to :first the first matched url will be requested (no ambigous error). Default: :all.
 * `:timeout` seconds to timout the requests
 * `:force_ssl` redirects to ssl version, if not already using it (requires `:replace_response_host`). Default: false.
+* `:verify_mode` the `OpenSSL::SSL` verify mode passed to Net::HTTP. Default: `OpenSSL::SSL::VERIFY_PEER`.
 
 ### Sample usage in a Ruby on Rails app
 
