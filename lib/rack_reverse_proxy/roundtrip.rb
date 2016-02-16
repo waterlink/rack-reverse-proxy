@@ -152,6 +152,7 @@ module RackReverseProxy
     def auto_use_ssl
       return unless "https" == uri.scheme
       target_response.use_ssl = true
+      target_response.verify_mode = options[:verify_mode] if options[:verify_mode]
     end
 
     def response_headers
