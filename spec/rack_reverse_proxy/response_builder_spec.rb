@@ -4,7 +4,7 @@ module RackReverseProxy
   RSpec.describe ResponseBuilder do
     let(:options) { {} }
     let(:uri_opt) { { :uri => "http://example.org/hello/world" } }
-    let(:request) { OpenStruct.new }
+    let(:request) { double("Request") }
 
     subject(:response) do
       ResponseBuilder.new(
