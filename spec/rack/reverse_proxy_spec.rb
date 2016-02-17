@@ -63,6 +63,15 @@ RSpec.describe Rack::ReverseProxy do
       expect(last_response.body).to eq("Proxied App2")
     end
 
+    it "returns headers from proxied app as strings" do
+      stub_request(:get, "http://example.com/test").to_return(
+        :body => "Proxied App",
+        :headers => { "Proxied-Header" => "TestValue" }
+      )
+      get "/test"
+      expect(last_response.headers["Proxied-Header"]).to eq("TestValue")
+    end
+
     it "sets the Host header w/o default port" do
       stub_request(:any, "example.com/test/stuff")
       get "/test/stuff"
