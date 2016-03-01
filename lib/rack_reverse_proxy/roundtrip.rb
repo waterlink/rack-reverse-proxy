@@ -89,7 +89,7 @@ module RackReverseProxy
       "#{uri.host}:#{uri.port}"
     end
 
-    def set_forwarded_host
+    def set_forwarded_headers
       return unless options[:x_forwarded_host]
       target_request_headers["X-Forwarded-Host"] = source_request.host
       target_request_headers["X-Forwarded-Port"] = source_request.port.to_s
@@ -178,7 +178,7 @@ module RackReverseProxy
 
     def setup_request
       preserve_host
-      set_forwarded_host
+      set_forwarded_headers
       initialize_http_header
       set_basic_auth
       setup_body
