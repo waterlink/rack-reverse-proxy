@@ -147,6 +147,20 @@ RSpec.describe Rack::ReverseProxy do
       expect(last_response.headers["Content-Length"]).to eq(body.length.to_s)
     end
 
+    it "does not include Accept-Encoding header" do
+      stub_request(:any, "http://example.com/test")
+
+      get "/test", {}, "HTTP_ACCEPT_ENCODING" => "gzip, deflate"
+
+      expect(
+        a_request(:get, "http://example.com/test").with(
+          :headers => { "Accept-Encoding" => "gzip, deflate" }
+        )
+      ).not_to have_been_made
+
+      expect(a_request(:get, "http://example.com/test")).to have_been_made
+    end
+
     describe "with non-default port" do
       def app
         Rack::ReverseProxy.new(dummy_app) do
@@ -183,6 +197,26 @@ RSpec.describe Rack::ReverseProxy do
         ).not_to have_been_made
 
         expect(a_request(:get, "http://example.com/test/stuff")).to have_been_made
+      end
+    end
+
+    describe "with preserve encoding turned on" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy "/test", "http://example.com/", :preserve_encoding => true
+        end
+      end
+
+      it "sets the Accept-Encoding header" do
+        stub_request(:any, "http://example.com/test")
+
+        get "/test", {}, "HTTP_ACCEPT_ENCODING" => "gzip, deflate"
+
+        expect(
+          a_request(:get, "http://example.com/test").with(
+            :headers => { "Accept-Encoding" => "gzip, deflate" }
+          )
+        ).to have_been_made
       end
     end
 
