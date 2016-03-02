@@ -84,6 +84,11 @@ module RackReverseProxy
       target_request_headers["HOST"] = host_header
     end
 
+    def preserve_encoding
+      return if options[:preserve_encoding]
+      target_request_headers.delete("Accept-Encoding")
+    end
+
     def host_header
       return uri.host if uri.port == uri.default_port
       "#{uri.host}:#{uri.port}"
@@ -178,6 +183,7 @@ module RackReverseProxy
 
     def setup_request
       preserve_host
+      preserve_encoding
       set_forwarded_headers
       initialize_http_header
       set_basic_auth
