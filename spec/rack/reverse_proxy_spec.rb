@@ -92,6 +92,16 @@ RSpec.describe Rack::ReverseProxy do
       ).to have_been_made
     end
 
+    it "sets the X-Forwarded-Port header to the proxying port by default" do
+      stub_request(:any, "example.com/test/stuff")
+      get "/test/stuff"
+      expect(
+        a_request(:get, "http://example.com/test/stuff").with(
+          :headers => { "X-Forwarded-Port" => "80" }
+        )
+      ).to have_been_made
+    end
+
     it "does not produce headers with a Status key" do
       stub_request(:get, "http://example.com/2test").to_return(
         :status => 301, :headers => { :status => "301 Moved Permanently" }
@@ -176,10 +186,10 @@ RSpec.describe Rack::ReverseProxy do
       end
     end
 
-    describe "with x_forwarded_host turned off" do
+    describe "with x_forwarded_headers turned off" do
       def app
         Rack::ReverseProxy.new(dummy_app) do
-          reverse_proxy_options :x_forwarded_host => false
+          reverse_proxy_options :x_forwarded_headers => false
           reverse_proxy "/test", "http://example.com/"
         end
       end
@@ -190,6 +200,17 @@ RSpec.describe Rack::ReverseProxy do
         expect(
           a_request(:get, "http://example.com/test/stuff").with(
             :headers => { "X-Forwarded-Host" => "example.org" }
+          )
+        ).not_to have_been_made
+        expect(a_request(:get, "http://example.com/test/stuff")).to have_been_made
+      end
+
+      it "does not set the X-Forwarded-Port header to the proxying port" do
+        stub_request(:any, "example.com/test/stuff")
+        get "/test/stuff"
+        expect(
+          a_request(:get, "http://example.com/test/stuff").with(
+            :headers => { "X-Forwarded-Port" => "80" }
           )
         ).not_to have_been_made
         expect(a_request(:get, "http://example.com/test/stuff")).to have_been_made
