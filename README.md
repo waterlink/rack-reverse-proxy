@@ -54,6 +54,7 @@ run app
 * `:force_ssl` redirects to ssl version, if not already using it (requires `:replace_response_host`). Default: false.
 * `:verify_mode` the `OpenSSL::SSL` verify mode passed to Net::HTTP. Default: `OpenSSL::SSL::VERIFY_PEER`.
 * `:x_forwarded_headers` sets up proper `X-Forwarded-*` headers. Default: true.
+* `:preserve_encoding` Set to true to pass Accept-Encoding header to proxy server. Default: false.
 
 ### Sample usage in a Ruby on Rails app
 
