@@ -17,3 +17,7 @@ bundler_args: --without development
 script:
   - bundle exec rspec
   - script/rubocop
+
+matrix:
+  allow_failures:
+    - rvm: rbx
