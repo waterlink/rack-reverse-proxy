@@ -53,6 +53,7 @@ run app
 * `:timeout` seconds to timout the requests
 * `:force_ssl` redirects to ssl version, if not already using it (requires `:replace_response_host`). Default: false.
 * `:verify_mode` the `OpenSSL::SSL` verify mode passed to Net::HTTP. Default: `OpenSSL::SSL::VERIFY_PEER`.
+* `:x_forwarded_headers` sets up proper `X-Forwarded-*` headers. Default: true.
 
 ### Sample usage in a Ruby on Rails app
 
