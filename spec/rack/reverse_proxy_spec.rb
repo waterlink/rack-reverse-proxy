@@ -103,6 +103,16 @@ RSpec.describe Rack::ReverseProxy do
       ).to have_been_made
     end
 
+    it "sets the X-Forwarded-Proto header to the proxying scheme by default" do
+      stub_request(:any, "example.com/test/stuff")
+      get "https://example.com/test/stuff"
+      expect(
+        a_request(:get, "example.com/test/stuff").with(
+          :headers => { "X-Forwarded-Proto" => "https" }
+        )
+      ).to have_been_made
+    end
+
     it "does not produce headers with a Status key" do
       stub_request(:get, "http://example.com/2test").to_return(
         :status => 301, :headers => { :status => "301 Moved Permanently" }
@@ -249,6 +259,17 @@ RSpec.describe Rack::ReverseProxy do
           )
         ).not_to have_been_made
         expect(a_request(:get, "http://example.com/test/stuff")).to have_been_made
+      end
+
+      it "does not set the X-Forwarded-Proto header to the proxying scheme" do
+        stub_request(:any, "example.com/test/stuff")
+        get "https://example.com/test/stuff"
+        expect(
+          a_request(:get, "example.com/test/stuff").with(
+            :headers => { "X-Forwarded-Proto" => "https" }
+          )
+        ).not_to have_been_made
+        expect(a_request(:get, "example.com/test/stuff")).to have_been_made
       end
     end
 
