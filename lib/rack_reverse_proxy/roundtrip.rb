@@ -98,6 +98,7 @@ module RackReverseProxy
       return unless options[:x_forwarded_headers]
       target_request_headers["X-Forwarded-Host"] = source_request.host
       target_request_headers["X-Forwarded-Port"] = source_request.port.to_s
+      target_request_headers["X-Forwarded-Proto"] = source_request.scheme
     end
 
     def initialize_http_header
