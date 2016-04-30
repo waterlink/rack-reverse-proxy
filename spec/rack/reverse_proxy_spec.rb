@@ -291,7 +291,7 @@ RSpec.describe Rack::ReverseProxy do
 
       it "makes request with basic auth" do
         stub_request(:get, "http://example.com/test/stuff").with(
-          basic_auth: ["joe", "shmoe"]
+          :basic_auth => %w(joe shmoe)
         ).to_return(
           :body => "secured content"
         )

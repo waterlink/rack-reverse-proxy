@@ -238,7 +238,7 @@ module RackReverseProxy
     end
 
     def find_rule
-      return if matches.length < 1
+      return if matches.empty?
       non_ambiguous_match
       matches.first
     end
