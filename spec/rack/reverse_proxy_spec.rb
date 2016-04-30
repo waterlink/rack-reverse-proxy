@@ -1,4 +1,5 @@
 require "spec_helper"
+require "base64"
 
 RSpec.describe Rack::ReverseProxy do
   include Rack::Test::Methods
@@ -289,7 +290,9 @@ RSpec.describe Rack::ReverseProxy do
       end
 
       it "makes request with basic auth" do
-        stub_request(:get, "http://joe:shmoe@example.com/test/stuff").to_return(
+        stub_request(:get, "http://example.com/test/stuff").with(
+          basic_auth: ["joe", "shmoe"]
+        ).to_return(
           :body => "secured content"
         )
         get "/test/stuff"
