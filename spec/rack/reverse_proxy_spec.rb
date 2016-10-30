@@ -586,18 +586,19 @@ RSpec.describe Rack::ReverseProxy do
     describe "with a matching and transforming class" do
       #:nodoc:
       class MatcherAndTransformer
-        def self.match(path)
+        def self.match(_path)
           MatcherAndTransformer.new
         end
 
-        def url(path)
+        def url(_path)
           "http://example.org/redirecting"
         end
 
         def transform(response, request_uri)
           status, headers, body = response
           location = headers["Location"]
-          headers["Location"] = "?url=" + CGI.escape(location) + "&request_uri=" + CGI.escape(request_uri.to_s)
+          headers["Location"] = "?url=" + CGI.escape(location) +
+                                "&request_uri=" + CGI.escape(request_uri.to_s)
           [status, headers, body]
         end
       end
@@ -617,7 +618,8 @@ RSpec.describe Rack::ReverseProxy do
 
         get "/"
         expect(last_response.headers["Location"])
-          .to eq("?url=http%3A%2F%2Fexample.org%2Ftarget&request_uri=http%3A%2F%2Fexample.org%2Fredirecting")
+          .to eq("?url=http%3A%2F%2Fexample.org%2Ftarget" \
+            "&request_uri=http%3A%2F%2Fexample.org%2Fredirecting")
       end
     end
 

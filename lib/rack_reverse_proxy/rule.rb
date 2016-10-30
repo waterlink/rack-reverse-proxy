@@ -153,11 +153,11 @@ module RackReverseProxy
       end
 
       def transform(response, request_uri)
-        found.inject(response) do |response, match|
+        found.inject(response) do |accumulator, match|
           if match.respond_to?(:transform)
-            match.transform(response, request_uri)
+            match.transform(accumulator, request_uri)
           else
-            response
+            accumulator
           end
         end
       end
