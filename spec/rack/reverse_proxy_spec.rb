@@ -24,6 +24,35 @@ RSpec.describe Rack::ReverseProxy do
     )
   end
 
+  describe "global options", focus: true do
+    it "starts with default global options" do
+      m = Rack::ReverseProxy.new(dummy_app) do
+        reverse_proxy "/test", "http://example.com/"
+      end
+      expect(m.instance_variable_get(:@global_options)).to eq(RackReverseProxy::Middleware::DEFAULT_OPTIONS)
+    end
+    it "allows options to be set via reverse_proxy_options, maintains global defaults" do
+      m = Rack::ReverseProxy.new(dummy_app) do
+        reverse_proxy "/test", "http://example.com/"
+        reverse_proxy_options preserve_host: "preserve_host_val"
+      end
+      expect(m.instance_variable_get(:@global_options)).to_not eq(RackReverseProxy::Middleware::DEFAULT_OPTIONS)
+      expect(m.instance_variable_get(:@global_options)[:preserve_host]).to eq("preserve_host_val")
+      raise "necessary condition for test is missing" if RackReverseProxy::Middleware::DEFAULT_OPTIONS[:x_forwarded_headers].nil?
+      expect(m.instance_variable_get(:@global_options)[:x_forwarded_headers]).to eq(RackReverseProxy::Middleware::DEFAULT_OPTIONS[:x_forwarded_headers])
+    end
+    it "supports multiple commulative invocations of reverse_proxy_options" do
+      m = Rack::ReverseProxy.new(dummy_app) do
+        reverse_proxy "/test", "http://example.com/"
+        reverse_proxy_options preserve_host: "preserve_host_val", stripped_headers: ["foo"]
+        reverse_proxy_options replace_response_host: "replace_response_host_val", stripped_headers: ["bar"]
+      end
+      expect(m.instance_variable_get(:@global_options)[:preserve_host]).to eq("preserve_host_val")
+      expect(m.instance_variable_get(:@global_options)[:replace_response_host]).to eq("replace_response_host_val")
+      expect(m.instance_variable_get(:@global_options)[:stripped_headers]).to eq(["bar"])
+    end
+  end
+
   describe "as middleware" do
     def app
       Rack::ReverseProxy.new(dummy_app) do

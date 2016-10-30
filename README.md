@@ -91,6 +91,19 @@ Right now if more than one rule matches any given route, it throws an exception 
 * `:stripped_headers` Array of headers that should be stripped before forwarding reqeust. Default: nil.
   e.g. `stripped_headers: ["Accept-Encoding", "Foo-Bar"]`
 
+If `reverse_proxy_options` is invoked multiple times, the invocations will have a commulative effect,
+only overwritting the values which they specify. Example of how this could be useful:
+
+```ruby
+config.middleware.insert(0, Rack::ReverseProxy) do
+  reverse_proxy_options preserve_host: false
+  if Rails.env.production? or Rails.env.staging?
+    reverse_proxy_options force_ssl: true, replace_response_host: true
+  end
+  reverse_proxy /^\/blog(\/?.*)$/, 'http://blog.example.com/blog$1'
+end
+```
+
 ## Note on Patches/Pull Requests
 * Fork the project.
 * Make your feature addition or bug fix.

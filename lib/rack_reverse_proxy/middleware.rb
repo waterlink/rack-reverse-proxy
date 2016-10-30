@@ -8,16 +8,18 @@ module RackReverseProxy
   class Middleware
     include NewRelic::Agent::Instrumentation::ControllerInstrumentation if defined? NewRelic
 
+    DEFAULT_OPTIONS = {
+      :preserve_host => true,
+      :stripped_headers => nil,
+      :x_forwarded_headers => true,
+      :matching => :all,
+      :replace_response_host => false
+    }
+
     def initialize(app = nil, &b)
       @app = app || lambda { |_| [404, [], []] }
       @rules = []
-      @global_options = {
-        :preserve_host => true,
-        :stripped_headers => nil,
-        :x_forwarded_headers => true,
-        :matching => :all,
-        :replace_response_host => false
-      }
+      @global_options = DEFAULT_OPTIONS
       instance_eval(&b) if block_given?
     end
 
@@ -28,7 +30,7 @@ module RackReverseProxy
     private
 
     def reverse_proxy_options(options)
-      @global_options = options
+      @global_options = @global_options.merge(options)
     end
 
     def reverse_proxy(rule, url = nil, opts = {})
