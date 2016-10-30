@@ -672,9 +672,9 @@ RSpec.describe Rack::ReverseProxy do
       #:nodoc:
       class MatcherHeaders
         def self.match(path, headers)
-          if path.match(%r{^/test}) && headers["ACCEPT"] && headers["ACCEPT"] == "foo.bar"
-            MatcherHeaders.new
-          end
+          MatcherHeaders.new if path.match(%r{^/test}) &&
+                                headers["ACCEPT"] &&
+                                headers["ACCEPT"] == "foo.bar"
         end
 
         def url(path)

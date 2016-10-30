@@ -1,7 +1,7 @@
 module RackReverseProxy
   module Errors
     # GenericURI indicates that url is too generic
-    class GenericURI < Exception
+    class GenericURI < RuntimeError
       attr_reader :url
 
       def intialize(url)
@@ -14,7 +14,7 @@ module RackReverseProxy
     end
 
     # AmbiguousMatch indicates that path matched more than one endpoint
-    class AmbiguousMatch < Exception
+    class AmbiguousMatch < RuntimeError
       attr_reader :path, :matches
 
       def initialize(path, matches)
