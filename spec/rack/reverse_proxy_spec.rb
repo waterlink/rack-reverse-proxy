@@ -1,4 +1,5 @@
 require "spec_helper"
+require "cgi"
 require "base64"
 
 RSpec.describe Rack::ReverseProxy do
@@ -579,6 +580,44 @@ RSpec.describe Rack::ReverseProxy do
 
         get "/users"
         expect(last_response.body).to eq("User App")
+      end
+    end
+
+    describe "with a matching and transforming class" do
+      #:nodoc:
+      class MatcherAndTransformer
+        def self.match(path)
+          MatcherAndTransformer.new
+        end
+
+        def url(path)
+          "http://example.org/redirecting"
+        end
+
+        def transform(response, request_uri)
+          status, headers, body = response
+          location = headers["Location"]
+          headers["Location"] = "?url=" + CGI.escape(location) + "&request_uri=" + CGI.escape(request_uri.to_s)
+          [status, headers, body]
+        end
+      end
+
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy MatcherAndTransformer
+        end
+      end
+
+      it "transforms the proxied response" do
+        stub_request(:get, "http://example.org/redirecting").to_return(
+          :headers => {
+            "Location" => "http://example.org/target"
+          }
+        )
+
+        get "/"
+        expect(last_response.headers["Location"])
+          .to eq("?url=http%3A%2F%2Fexample.org%2Ftarget&request_uri=http%3A%2F%2Fexample.org%2Fredirecting")
       end
     end
 

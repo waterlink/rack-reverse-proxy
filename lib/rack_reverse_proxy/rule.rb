@@ -25,6 +25,16 @@ module RackReverseProxy
       ).build_uri
     end
 
+    def transform(path, env, response, request_uri, *args)
+      Candidate.new(
+        self,
+        has_custom_url,
+        path,
+        env,
+        matches(path, *args)
+      ).transform(response, request_uri)
+    end
+
     def to_s
       %("#{spec}" => "#{url}")
     end
@@ -66,6 +76,10 @@ module RackReverseProxy
       def build_uri
         return nil unless url
         raw_uri
+      end
+
+      def transform(response, request_uri)
+        matches.transform(response, request_uri)
       end
 
       private
@@ -135,6 +149,16 @@ module RackReverseProxy
       def substitute(url)
         found.each_with_index.inject(url) do |acc, (match, i)|
           acc.gsub("$#{i}", match)
+        end
+      end
+
+      def transform(response, request_uri)
+        found.inject(response) do |response, match|
+          if match.respond_to?(:transform)
+            match.transform(response, request_uri)
+          else
+            response
+          end
         end
       end
 

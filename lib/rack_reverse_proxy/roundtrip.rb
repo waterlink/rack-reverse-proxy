@@ -208,7 +208,11 @@ module RackReverseProxy
       setup_request
       setup_response_headers
 
-      rack_response
+      transform_response(rack_response)
+    end
+
+    def transform_response(response)
+      rule.transform(path, env, response, uri, headers, source_request)
     end
 
     def format_headers(headers)
