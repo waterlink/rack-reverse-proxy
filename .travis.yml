@@ -2,6 +2,7 @@ language: ruby
 rvm:
   - 2.2.5
   - 2.3.1
+  - 2.4.0
   - jruby-9.0.5.0
   - rbx
 
@@ -12,7 +13,6 @@ bundler_args: --without development
 
 script:
   - bundle exec rspec
-  - script/rubocop
 
 matrix:
   allow_failures:

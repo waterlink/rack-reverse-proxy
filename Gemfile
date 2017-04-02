@@ -3,7 +3,7 @@ source "https://rubygems.org"
 gemspec
 
 ruby_version = RUBY_VERSION.to_f
-rubocop_platform = [:ruby_20, :ruby_21, :ruby_22, :ruby_23]
+rubocop_platform = [:ruby_20, :ruby_21, :ruby_22, :ruby_23, :ruby_24]
 rubocop_platform = [:ruby_20, :ruby_21] if ruby_version < 2.0
 
 group :test do
