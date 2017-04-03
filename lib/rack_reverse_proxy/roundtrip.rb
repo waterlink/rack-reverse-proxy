@@ -56,7 +56,7 @@ module RackReverseProxy
     def https_redirect
       rewrite_uri(uri, source_request)
       uri.scheme = "https"
-      [301, { "Location" => uri.to_s }, ""]
+      [301, { "Location" => uri.to_s }, [""]]
     end
 
     def need_https_redirect?
