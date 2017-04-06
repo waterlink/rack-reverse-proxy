@@ -322,7 +322,7 @@ RSpec.describe Rack::ReverseProxy do
       end
     end
 
-    describe "with preserve response host turned on" do
+    describe "with replace response host turned on" do
       def app
         Rack::ReverseProxy.new(dummy_app) do
           reverse_proxy "/test", "http://example.com/", :replace_response_host => true
