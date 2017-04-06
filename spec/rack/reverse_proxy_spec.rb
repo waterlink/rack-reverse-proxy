@@ -354,6 +354,14 @@ RSpec.describe Rack::ReverseProxy do
         get "https://example.com/test/stuff"
         expect(last_response.headers["location"]).to eq("https://example.com/bar")
       end
+
+      it "doesn't replaces the location response header if it has no host" do
+        stub_request(:get, "http://example.com/test/stuff").to_return(
+          :headers => { "location" => "/bar" }
+        )
+        get "http://example.com/test/stuff"
+        expect(last_response.headers["location"]).to eq("/bar")
+      end
     end
 
     describe "with ambiguous routes and all matching" do

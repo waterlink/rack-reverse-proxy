@@ -179,7 +179,7 @@ module RackReverseProxy
     end
 
     def need_replace_location?
-      response_headers["Location"] && options[:replace_response_host]
+      response_headers["Location"] && options[:replace_response_host] && response_location.host
     end
 
     def setup_request
