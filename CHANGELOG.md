@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.0
+
+- Breaking Change: Rename option x_forwarded_host option to x_forwarded_headers, as it controls both X-Forwarded-Port and X-Forwarded-Host - [Aurelien Derouineau](https://github.com/aderouineau) [#26](https://github.com/waterlink/rack-reverse-proxy/pull/26)
+- Breaking Change: Strip Accept-Encoding header before forwarding request. [Max Gulyaev](https://github.com/maxilev) [#27](https://github.com/waterlink/rack-reverse-proxy/pull/27)
+
 ## 0.10.0
 
 - Feature: `options[:verify_mode]` to set SSL verification mode. - [Marv Cool](https://github.com/MrMarvin) [#24](https://github.com/waterlink/rack-reverse-proxy/pull/24) and [#25](https://github.com/waterlink/rack-reverse-proxy/pull/25)
