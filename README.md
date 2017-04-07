@@ -18,11 +18,14 @@ gem "rack-reverse-proxy", require: "rack/reverse_proxy"
 
 ## Usage
 
-Rules can be a regex or a string. If a regex is used, you can use the subcaptures in your forwarding url by denoting them with a `$`.
+`Rack::ReverseProxy` should ideally be the very first middleware in your
+stack. In a typical use case it is being used to proxy an entirely
+different website through your application, so it's unlikely that you will want
+any other middleware to modify the requests or responses. The examples below
+reflect this.
 
-Right now if more than one rule matches any given route, it throws an exception for an ambiguous match.  This will probably change later. If no match is found, the call is forwarded to your application.
 
-Below is an example for configuring the middleware:
+### Generic Rack app example
 
 ```ruby
 require 'rack/reverse_proxy'
@@ -44,6 +47,37 @@ end
 run app
 ```
 
+### Ruby on Rails app example
+
+This example use `config.middleware.insert(0` to ensure that
+`Rack::ReverseProxy` is first in the stack. It is possible that
+other code in your app (usually in application.rb, development.rb, or production.rb)
+will take over this position in the stack. To ensure
+that this is not the case, view the stack by running `rails middleware`. You should see
+`Rack::ReverseProxy` at the top. Note that
+the middleware stack will likely differ slightly in each environment. All that said, it's a pretty
+safe bet to put the below code into application.rb.
+
+```ruby
+# config/application.rb
+config.middleware.insert(0, Rack::ReverseProxy) do
+  reverse_proxy_options preserve_host: true
+  reverse_proxy '/wiki', 'http://wiki.example.com/'
+end
+```
+
+### Rules
+
+As seen in the Rack example above, `reverse_proxy` can be invoked multiple times with
+different rules, which will be commulatively added.
+
+Rules can be a regex or a string. If a regex is used, you can use the subcaptures in your forwarding url by denoting them with a `$`.
+
+Right now if more than one rule matches any given route, it throws an exception for an ambiguous match.  This will probably change later. If no match is found, the call is forwarded to your application.
+
+
+### Options
+
 `reverse_proxy_options` sets global options for all reverse proxies. Available options are:
 
 * `:preserve_host` Set to false to omit Host headers
@@ -55,28 +89,6 @@ run app
 * `:verify_mode` the `OpenSSL::SSL` verify mode passed to Net::HTTP. Default: `OpenSSL::SSL::VERIFY_PEER`.
 * `:x_forwarded_headers` sets up proper `X-Forwarded-*` headers. Default: true.
 * `:preserve_encoding` Set to true to pass Accept-Encoding header to proxy server. Default: false.
-
-### Sample usage in a Ruby on Rails app
-
-Rails 3 or less:
-
-```ruby
-# config/application.rb
-config.middleware.insert_before(Rack::Lock, Rack::ReverseProxy) do
-  reverse_proxy_options preserve_host: true
-  reverse_proxy '/wiki', 'http://wiki.example.com/'
-end
-```
-
-Rails 4+ or if you use `config.threadsafe`, you'll need to `insert_before(Rack::Runtime, Rack::ReverseProxy)` as `Rack::Lock` does not exist when `config.allow_concurrency == true`:
-
-```ruby
-# config/application.rb
-config.middleware.insert_before(Rack::Runtime, Rack::ReverseProxy) do
-  reverse_proxy_options preserve_host: true
-  reverse_proxy '/wiki', 'http://wiki.example.com/'
-end
-```
 
 ## Note on Patches/Pull Requests
 * Fork the project.
