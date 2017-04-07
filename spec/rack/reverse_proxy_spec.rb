@@ -322,7 +322,7 @@ RSpec.describe Rack::ReverseProxy do
       end
     end
 
-    describe "with preserve response host turned on" do
+    describe "with replace response host turned on" do
       def app
         Rack::ReverseProxy.new(dummy_app) do
           reverse_proxy "/test", "http://example.com/", :replace_response_host => true
@@ -353,6 +353,14 @@ RSpec.describe Rack::ReverseProxy do
         )
         get "https://example.com/test/stuff"
         expect(last_response.headers["location"]).to eq("https://example.com/bar")
+      end
+
+      it "doesn't replaces the location response header if it has no host" do
+        stub_request(:get, "http://example.com/test/stuff").to_return(
+          :headers => { "location" => "/bar" }
+        )
+        get "http://example.com/test/stuff"
+        expect(last_response.headers["location"]).to eq("/bar")
       end
     end
 
