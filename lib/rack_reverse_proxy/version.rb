@@ -1,4 +1,4 @@
 #:nodoc:
 module RackReverseProxy
-  VERSION = "0.12.0".freeze
+  VERSION = "1.0.0-unreleased".freeze
 end

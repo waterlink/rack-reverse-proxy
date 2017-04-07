@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0 (UNRELEASED)
+
+- Breaking Change: Never modify Location headers that are only paths without hosts. [John Bachir](https://github.com/jjb) [#46](https://github.com/waterlink/rack-reverse-proxy/pull/46)
+
 ## 0.11.0
 
 - Breaking Change: Rename option x_forwarded_host option to x_forwarded_headers, as it controls both X-Forwarded-Port and X-Forwarded-Host - [Aurelien Derouineau](https://github.com/aderouineau) [#26](https://github.com/waterlink/rack-reverse-proxy/pull/26)
