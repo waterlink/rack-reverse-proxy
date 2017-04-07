@@ -3,6 +3,9 @@
 ## 1.0.0 (UNRELEASED)
 
 - Breaking Change: Never modify Location headers that are only paths without hosts. [John Bachir](https://github.com/jjb) [#46](https://github.com/waterlink/rack-reverse-proxy/pull/46)
+- Breaking Change: Previously, the Accept-Encoding header was stripped by default, unless the
+  `preserve_encoding` option was set to true. Now, no headers are stripped by default, and an array
+  of headers that should be stripped can be specified with the `stripped_headers` option.
 - Bugfix: Fix rack response body for https redirects [John Bachir](https://github.com/jjb) [#43](https://github.com/waterlink/rack-reverse-proxy/pull/43)
 
 ## 0.12.0

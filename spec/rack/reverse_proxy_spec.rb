@@ -159,20 +159,6 @@ RSpec.describe Rack::ReverseProxy do
       expect(last_response.headers["Content-Length"]).to eq(body.length.to_s)
     end
 
-    it "does not include Accept-Encoding header" do
-      stub_request(:any, "http://example.com/test")
-
-      get "/test", {}, "HTTP_ACCEPT_ENCODING" => "gzip, deflate"
-
-      expect(
-        a_request(:get, "http://example.com/test").with(
-          :headers => { "Accept-Encoding" => "gzip, deflate" }
-        )
-      ).not_to have_been_made
-
-      expect(a_request(:get, "http://example.com/test")).to have_been_made
-    end
-
     describe "with non-default port" do
       def app
         Rack::ReverseProxy.new(dummy_app) do
@@ -212,23 +198,53 @@ RSpec.describe Rack::ReverseProxy do
       end
     end
 
-    describe "with preserve encoding turned on" do
-      def app
-        Rack::ReverseProxy.new(dummy_app) do
-          reverse_proxy "/test", "http://example.com/", :preserve_encoding => true
+    context "stripped_headers option" do
+      subject do
+        stub_request(:any, "http://example.com/test")
+        get "/test", {}, "HTTP_ACCEPT_ENCODING" => "gzip, deflate", "HTTP_FOO_BAR" => "baz"
+      end
+
+      describe "with stripped_headers not set" do
+        def app
+          Rack::ReverseProxy.new(dummy_app) do
+            reverse_proxy "/test", "http://example.com/"
+          end
+        end
+
+        it "forwards the headers" do
+          subject
+          expect(
+            a_request(:get, "http://example.com/test").with(
+              :headers => { "Accept-Encoding" => "gzip, deflate", "Foo-Bar" => "baz" }
+            )
+          ).to have_been_made
         end
       end
 
-      it "sets the Accept-Encoding header" do
-        stub_request(:any, "http://example.com/test")
+      describe "with stripped_headers set" do
+        before do
+          @stripped_headers = ["Accept-Encoding", "Foo-Bar"]
+          def app
+            # so the value is constant in the closure below
+            stripped_headers = @stripped_headers
+            Rack::ReverseProxy.new(dummy_app) do
+              reverse_proxy "/test", "http://example.com/", :stripped_headers => stripped_headers
+            end
+          end
+        end
 
-        get "/test", {}, "HTTP_ACCEPT_ENCODING" => "gzip, deflate"
-
-        expect(
-          a_request(:get, "http://example.com/test").with(
-            :headers => { "Accept-Encoding" => "gzip, deflate" }
-          )
-        ).to have_been_made
+        it "removes the stripped headers" do
+          subject
+          expect(
+            a_request(:get, "http://example.com/test").with{ |req|
+              req.headers.each do |header, value|
+                if @stripped_headers.include?(header)
+                  fail "expected #{header} to not be present"
+                end
+              end
+            }
+          ).to have_been_made
+        end
       end
     end
 

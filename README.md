@@ -88,7 +88,8 @@ Right now if more than one rule matches any given route, it throws an exception 
 * `:force_ssl` redirects to ssl version, if not already using it (requires `:replace_response_host`). Default: false.
 * `:verify_mode` the `OpenSSL::SSL` verify mode passed to Net::HTTP. Default: `OpenSSL::SSL::VERIFY_PEER`.
 * `:x_forwarded_headers` sets up proper `X-Forwarded-*` headers. Default: true.
-* `:preserve_encoding` Set to true to pass Accept-Encoding header to proxy server. Default: false.
+* `:stripped_headers` Array of headers that should be stripped before forwarding reqeust. Default: nil.
+  e.g. `stripped_headers: ["Accept-Encoding", "Foo-Bar"]`
 
 ## Note on Patches/Pull Requests
 * Fork the project.

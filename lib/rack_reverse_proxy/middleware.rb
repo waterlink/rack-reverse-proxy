@@ -13,7 +13,7 @@ module RackReverseProxy
       @rules = []
       @global_options = {
         :preserve_host => true,
-        :preserve_encoding => false,
+        :stripped_headers => nil,
         :x_forwarded_headers => true,
         :matching => :all,
         :replace_response_host => false
