@@ -6,6 +6,11 @@
 - Breaking Change: Previously, the Accept-Encoding header was stripped by default, unless the
   `preserve_encoding` option was set to true. Now, no headers are stripped by default, and an array
   of headers that should be stripped can be specified with the `stripped_headers` option.
+- Breaking Change: Previously, rack-reverse-proxy had the behavior/bug that when reverse_proxy_options
+  was invoked, all options that weren't set in the invokation would be set to nil. Now, those options will remain set at their default values - [Krzysztof Knapik](https://github.com/knapo) [#37](https://github.com/waterlink/rack-reverse-proxy/pull/37) and [John Bachir](https://github.com/jjb) [#47](https://github.com/waterlink/rack-reverse-proxy/pull/47)
+- Breaking Change: Previously, when invoking reverse_proxy_options multiple times, only the
+  final invocation would have any effect. Now, the invocations will have a commulative effect.
+  [John Bachir](https://github.com/jjb) [#47](https://github.com/waterlink/rack-reverse-proxy/pull/47)
 - Bugfix: Fix rack response body for https redirects [John Bachir](https://github.com/jjb) [#43](https://github.com/waterlink/rack-reverse-proxy/pull/43)
 
 ## 0.12.0
