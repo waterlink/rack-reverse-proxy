@@ -84,9 +84,11 @@ module RackReverseProxy
       target_request_headers["HOST"] = host_header
     end
 
-    def preserve_encoding
-      return if options[:preserve_encoding]
-      target_request_headers.delete("Accept-Encoding")
+    def strip_headers
+      return unless options[:stripped_headers]
+      options[:stripped_headers].each do |header|
+        target_request_headers.delete(header)
+      end
     end
 
     def host_header
@@ -184,7 +186,7 @@ module RackReverseProxy
 
     def setup_request
       preserve_host
-      preserve_encoding
+      strip_headers
       set_forwarded_headers
       initialize_http_header
       set_basic_auth
