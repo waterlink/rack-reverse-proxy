@@ -3,6 +3,12 @@
 ## 1.0.0 (UNRELEASED)
 
 - Breaking Change: Never modify Location headers that are only paths without hosts. [John Bachir](https://github.com/jjb) [#46](https://github.com/waterlink/rack-reverse-proxy/pull/46)
+- Bugfix: Fix rack response body for https redirects [John Bachir](https://github.com/jjb) [#43](https://github.com/waterlink/rack-reverse-proxy/pull/43)
+
+## 0.12.0
+
+- Enhancement: Set "X-Forwarded-Proto" header to the proxying scheme. [Motonobu Kuryu](https://github.com/arc279) [#32](https://github.com/waterlink/rack-reverse-proxy/pull/32)
+- Bugfix: Upgrade to a version of rack-proxy with the bug fix for the unclosed network resources. [John Bachir](https://github.com/jjb) [#45](https://github.com/waterlink/rack-reverse-proxy/pull/45)
 
 ## 0.11.0
 
