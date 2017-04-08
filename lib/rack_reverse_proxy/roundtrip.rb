@@ -168,6 +168,9 @@ module RackReverseProxy
           format_headers(target_response.headers)
         )
       )
+    rescue Errno::ECONNREFUSED => e
+      @_target_response = Struct.new(:status, :body).new(502, [])
+      {}
     end
 
     def replace_location_header
