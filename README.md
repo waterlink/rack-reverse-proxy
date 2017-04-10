@@ -78,9 +78,20 @@ Right now if more than one rule matches any given route, it throws an exception 
 
 ### Options
 
+#### Terminology
+
+<dl>
+  <dt>Source Request</dt>
+  <dd>The request sent from the end user's browser to the rack stack which is running rack-reverse-proxy.</dd>
+  <dt>Target Request</dt>
+  <dd>The request sent from rack-reverse-proxy to the server which will produce the response.</dd>
+</dl>
+
 `reverse_proxy_options` sets global options for all reverse proxies. Available options are:
 
-* `:preserve_host` Set to false to omit Host headers
+* `:preserve_host` This determines which Host header is used in the target request. If set to `true`, the target
+  request's host (specified in the `reverse_proxy` invocation) will be used. If set to `false`, the source request's
+  Host header will be re-used for the target request. Default: `true`.
 * `:username` username for basic auth
 * `:password` password for basic auth
 * `:matching` is a global only option, if set to :first the first matched url will be requested (no ambigous error). Default: :all.
