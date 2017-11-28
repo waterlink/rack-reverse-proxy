@@ -90,6 +90,13 @@ module RackReverseProxy
         target_request_headers.delete(header)
       end
     end
+    
+    def extra_headers
+      return unless options[:extra_headers]
+      options[:extra_headers].each do |k,v|
+        target_request_headers[k.to_s] = v
+      end
+    end
 
     def host_header
       return uri.host if uri.port == uri.default_port
@@ -187,6 +194,7 @@ module RackReverseProxy
     def setup_request
       preserve_host
       strip_headers
+      extra_headers
       set_forwarded_headers
       initialize_http_header
       set_basic_auth
