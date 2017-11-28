@@ -276,6 +276,30 @@ RSpec.describe Rack::ReverseProxy do
         end
       end
     end
+    
+    context "extra_headers option" do
+      subject do
+        stub_request(:any, "http://example.com/test")
+        get "/test", {}, "HTTP_ACCEPT_ENCODING" => "gzip, deflate""
+      end
+
+      describe "with extra_headers set" do
+        def app
+          Rack::ReverseProxy.new(dummy_app) do
+            reverse_proxy "/test", "http://example.com/", extra_headers: {"HTTP_FOO_BAR" => "baz"}
+          end
+        end
+
+        it "adds extra headers to the request headers" do
+          subject
+          expect(
+            a_request(:get, "http://example.com/test").with(
+              :headers => { "Accept-Encoding" => "gzip, deflate", "Foo-Bar" => "baz" }
+            )
+          ).to have_been_made
+        end
+      end
+    end
 
     describe "with x_forwarded_headers turned off" do
       def app
