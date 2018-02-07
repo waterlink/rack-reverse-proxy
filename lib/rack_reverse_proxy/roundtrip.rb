@@ -169,6 +169,7 @@ module RackReverseProxy
         )
       )
     rescue Errno::ECONNREFUSED => e
+      puts "rack-reverse-proxy rescued error from origin: #{e.class.name}: #{e.message}"
       @_target_response = Struct.new(:status, :body).new(502, [])
       {}
     end
