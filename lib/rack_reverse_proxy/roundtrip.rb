@@ -162,12 +162,34 @@ module RackReverseProxy
       end
     end
 
+    NET_HTTP_EXCEPTIONS = [
+      IOError,
+      Errno::ECONNABORTED,
+      Errno::ECONNREFUSED,
+      Errno::ECONNRESET,
+      Errno::EHOSTUNREACH,
+      Errno::EINVAL,
+      Errno::ENETUNREACH,
+      Errno::EPIPE,
+      Net::HTTPBadResponse,
+      Net::HTTPHeaderSyntaxError,
+      Net::ProtocolError,
+      SocketError,
+      Zlib::GzipFile::Error,
+    ]
+    NET_HTTP_EXCEPTIONS << OpenSSL::SSL::SSLError if defined?(OpenSSL)
+    NET_HTTP_EXCEPTIONS << Net::OpenTimeout if defined?(Net::OpenTimeout)
+
     def rack_response_headers
       Rack::Utils::HeaderHash.new(
         Rack::Proxy.normalize_headers(
           format_headers(target_response.headers)
         )
       )
+    rescue *NET_HTTP_EXCEPTIONS => e
+      puts "rack-reverse-proxy rescued error from origin: #{e.class.name}: #{e.message}"
+      @_target_response = Struct.new(:status, :body).new(502, [])
+      {}
     end
 
     def replace_location_header
