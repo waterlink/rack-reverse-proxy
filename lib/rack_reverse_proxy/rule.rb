@@ -132,7 +132,7 @@ module RackReverseProxy
         @rackreq = rackreq
 
         @headers = headers if options[:accept_headers]
-        @host_matches = host_matches?(options, headers)
+        @constraints = options[:constraints]
         @spec_arity = spec.method(spec_match_method_name).arity
       end
 
@@ -165,7 +165,7 @@ module RackReverseProxy
 
       private
 
-      attr_reader :spec, :url, :path, :headers, :rackreq, :spec_arity, :has_custom_url
+      attr_reader :spec, :url, :path, :headers, :rackreq, :spec_arity, :has_custom_url, :constraints
 
       def found
         @_found ||= find_matches
@@ -173,7 +173,7 @@ module RackReverseProxy
 
       def find_matches
         Array(
-          spec.send(spec_match_method_name, *spec_params) && @host_matches
+          spec.send(spec_match_method_name, *spec_params) && apply_constraints!
         )
       end
 
@@ -203,12 +203,12 @@ module RackReverseProxy
         :call
       end
 
-      def host_matches?(options, headers)
-        if options[:host].blank?
+      def apply_constraints!
+        if constraints.blank?
           return true
         end
 
-        headers['HOST'] === options[:host]
+        constraints.call(rackreq.env)
       end
     end
   end
