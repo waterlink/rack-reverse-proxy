@@ -48,7 +48,7 @@ module RackReverseProxy
         spec,
         url,
         path,
-        options[:accept_headers],
+        options,
         has_custom_url,
         *args
       )
@@ -124,14 +124,15 @@ module RackReverseProxy
       # rubocop:disable Metrics/ParameterLists
 
       # FIXME: eliminate :url, :accept_headers, :has_custom_url
-      def initialize(spec, url, path, accept_headers, has_custom_url, headers, rackreq, *_)
+      def initialize(spec, url, path, options, has_custom_url, headers, rackreq, *_)
         @spec = spec
         @url = url
         @path = path
         @has_custom_url = has_custom_url
         @rackreq = rackreq
 
-        @headers = headers if accept_headers
+        @headers = headers if options[:accept_headers]
+        @host_matches = host_matches?(options, headers)
         @spec_arity = spec.method(spec_match_method_name).arity
       end
 
@@ -172,7 +173,7 @@ module RackReverseProxy
 
       def find_matches
         Array(
-          spec.send(spec_match_method_name, *spec_params)
+          spec.send(spec_match_method_name, *spec_params) && @host_matches
         )
       end
 
@@ -200,6 +201,14 @@ module RackReverseProxy
       def spec_match_method_name
         return :match if spec.respond_to?(:match)
         :call
+      end
+
+      def host_matches?(options, headers)
+        if options[:host].blank?
+          return true
+        end
+
+        headers['HOST'] === options[:host]
       end
     end
   end
