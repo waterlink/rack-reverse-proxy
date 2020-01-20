@@ -48,7 +48,7 @@ module RackReverseProxy
         spec,
         url,
         path,
-        options[:accept_headers],
+        options,
         has_custom_url,
         *args
       )
@@ -124,14 +124,15 @@ module RackReverseProxy
       # rubocop:disable Metrics/ParameterLists
 
       # FIXME: eliminate :url, :accept_headers, :has_custom_url
-      def initialize(spec, url, path, accept_headers, has_custom_url, headers, rackreq, *_)
+      def initialize(spec, url, path, options, has_custom_url, headers, rackreq, *_)
         @spec = spec
         @url = url
         @path = path
         @has_custom_url = has_custom_url
         @rackreq = rackreq
 
-        @headers = headers if accept_headers
+        @headers = headers if options[:accept_headers]
+        @constraint = options[:constraint]
         @spec_arity = spec.method(spec_match_method_name).arity
       end
 
@@ -164,7 +165,7 @@ module RackReverseProxy
 
       private
 
-      attr_reader :spec, :url, :path, :headers, :rackreq, :spec_arity, :has_custom_url
+      attr_reader :spec, :url, :path, :headers, :rackreq, :spec_arity, :has_custom_url, :constraint
 
       def found
         @_found ||= find_matches
@@ -172,7 +173,7 @@ module RackReverseProxy
 
       def find_matches
         Array(
-          spec.send(spec_match_method_name, *spec_params)
+          spec.send(spec_match_method_name, *spec_params) && apply_constraints!
         )
       end
 
@@ -200,6 +201,14 @@ module RackReverseProxy
       def spec_match_method_name
         return :match if spec.respond_to?(:match)
         :call
+      end
+
+      def apply_constraints!
+        if constraint.blank?
+          return true
+        end
+        
+        constraint.call(rackreq)
       end
     end
   end
