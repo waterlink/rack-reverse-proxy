@@ -207,8 +207,8 @@ module RackReverseProxy
         if constraint.blank?
           return true
         end
-
-        constraint.call(rackreq.env)
+        
+        constraint.call(rackreq)
       end
     end
   end
