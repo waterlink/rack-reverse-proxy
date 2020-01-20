@@ -440,6 +440,26 @@ RSpec.describe Rack::ReverseProxy do
       end
     end
 
+    describe "with a matching constraint" do
+      def app
+        Rack::ReverseProxy.new(dummy_app) do
+          reverse_proxy "/test", "http://example1.com/", constraint: ->() { true }
+          reverse_proxy "/test2", "http://example2.com/", constraint: ->() { false }
+        end
+      end
+
+      it "is considered when the route matches" do
+        stub_request(:get, "http://example1.com/test").to_return(:body => "Proxied App")
+        get "/test"
+        expect(last_response.body).to eq("Proxied App")
+      end
+
+      it "forwards requests to the calling app when path matches but constraint returns false" do
+        get "/test2"
+        expect(last_response.body).to eq("Dummy App")
+      end
+    end 
+
     describe "with force ssl turned on" do
       def app
         Rack::ReverseProxy.new(dummy_app) do

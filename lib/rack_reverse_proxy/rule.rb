@@ -132,7 +132,7 @@ module RackReverseProxy
         @rackreq = rackreq
 
         @headers = headers if options[:accept_headers]
-        @constraints = options[:constraints]
+        @constraint = options[:constraint]
         @spec_arity = spec.method(spec_match_method_name).arity
       end
 
@@ -165,7 +165,7 @@ module RackReverseProxy
 
       private
 
-      attr_reader :spec, :url, :path, :headers, :rackreq, :spec_arity, :has_custom_url, :constraints
+      attr_reader :spec, :url, :path, :headers, :rackreq, :spec_arity, :has_custom_url, :constraint
 
       def found
         @_found ||= find_matches
@@ -204,11 +204,11 @@ module RackReverseProxy
       end
 
       def apply_constraints!
-        if constraints.blank?
+        if constraint.blank?
           return true
         end
 
-        constraints.call(rackreq.env)
+        constraint.call(rackreq.env)
       end
     end
   end
