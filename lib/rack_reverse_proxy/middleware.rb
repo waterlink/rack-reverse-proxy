@@ -13,7 +13,8 @@ module RackReverseProxy
       :stripped_headers => nil,
       :x_forwarded_headers => true,
       :matching => :all,
-      :replace_response_host => false
+      :replace_response_host => false,
+      :replace_request_host => nil
     }
 
     def initialize(app = nil, &b)

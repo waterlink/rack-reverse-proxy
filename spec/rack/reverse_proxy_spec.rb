@@ -225,6 +225,25 @@ RSpec.describe Rack::ReverseProxy do
 
         expect(a_request(:get, "http://example.com/test/stuff")).to have_been_made
       end
+
+      context "and replace_request_host set" do
+        def app
+          Rack::ReverseProxy.new(dummy_app) do
+            reverse_proxy "/test", "http://example.com/", :preserve_host => false, :replace_request_host => "printavo.com"
+          end
+        end
+
+        it "replaces the Host header as specified" do
+          stub_request(:any, "example.com/test/stuff")
+          get "/test/stuff"
+
+          expect(
+            a_request(:get, "http://example.com/test/stuff").with(
+              :headers => { "Host" => "printavo.com" }
+            )
+          ).to have_been_made
+        end
+      end
     end
 
     context "stripped_headers option" do

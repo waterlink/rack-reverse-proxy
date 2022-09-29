@@ -79,9 +79,12 @@ module RackReverseProxy
       ).new(uri.request_uri)
     end
 
-    def preserve_host
-      return unless options[:preserve_host]
-      target_request_headers["HOST"] = host_header
+    def preserve_or_request_host
+      if options[:preserve_host]
+        target_request_headers["HOST"] = host_header
+      elsif options[:replace_request_host]
+        target_request_headers["HOST"] = options[:replace_request_host]
+      end
     end
 
     def strip_headers
@@ -185,7 +188,7 @@ module RackReverseProxy
     end
 
     def setup_request
-      preserve_host
+      preserve_or_request_host
       strip_headers
       set_forwarded_headers
       initialize_http_header
