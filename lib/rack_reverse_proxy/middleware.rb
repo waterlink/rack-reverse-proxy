@@ -17,7 +17,7 @@ module RackReverseProxy
     }
 
     def initialize(app = nil, &b)
-      @app = app || lambda { |_| [404, [], []] }
+      @app = app || lambda { |_| [404, {}, []] }
       @rules = []
       @global_options = DEFAULT_OPTIONS
       instance_eval(&b) if block_given?

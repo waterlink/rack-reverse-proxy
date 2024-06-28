@@ -152,7 +152,7 @@ module RackReverseProxy
     end
 
     def response_headers
-      @_response_headers ||= build_response_headers
+      @_response_headers ||= build_response_headers.transform_keys(&:downcase)
     end
 
     def build_response_headers
@@ -163,7 +163,7 @@ module RackReverseProxy
     end
 
     def rack_response_headers
-      Rack::Utils::HeaderHash.new(
+      Rack::Headers.new.merge(
         Rack::Proxy.normalize_headers(
           format_headers(target_response.headers)
         )
@@ -173,15 +173,15 @@ module RackReverseProxy
     def replace_location_header
       return unless need_replace_location?
       rewrite_uri(response_location, source_request)
-      response_headers["Location"] = response_location.to_s
+      response_headers["location"] = response_location.to_s
     end
 
     def response_location
-      @_response_location ||= URI(response_headers["Location"])
+      @_response_location ||= URI(response_headers["location"] || uri)
     end
 
     def need_replace_location?
-      response_headers["Location"] && options[:replace_response_host] && response_location.host
+      response_headers["location"] && options[:replace_response_host] && response_location.host
     end
 
     def setup_request

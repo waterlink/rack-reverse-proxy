@@ -24,7 +24,7 @@ RSpec.describe Rack::ReverseProxy do
     )
   end
 
-  describe "global options", focus: true do
+  describe "global options" do
     it "starts with default global options" do
       m = Rack::ReverseProxy.new(dummy_app) do
         reverse_proxy "/test", "http://example.com/"
@@ -73,10 +73,10 @@ RSpec.describe Rack::ReverseProxy do
       expect(last_response.body).to eq("Proxied App")
     end
 
-    it "produces a response header of type HeaderHash" do
+    it "produces a response header of type Headers" do
       stub_request(:get, "http://example.com/test")
       get "/test"
-      expect(last_response.headers).to be_an_instance_of(Rack::Utils::HeaderHash)
+      expect(last_response.headers).to be_an_instance_of(Rack::Headers)
     end
 
     it "parses the headers as a Hash with values of type String" do
@@ -154,7 +154,7 @@ RSpec.describe Rack::ReverseProxy do
       expect(headers["Status"]).to be_nil
     end
 
-    it "formats the headers correctly to avoid duplicates" do
+    it "compares keys case-insensitive" do
       stub_request(:get, "http://example.com/2test").to_return(
         :headers => { :date => "Wed, 22 Jul 2015 11:27:21 GMT" }
       )
@@ -163,7 +163,7 @@ RSpec.describe Rack::ReverseProxy do
 
       headers = last_response.headers.to_hash
       expect(headers["Date"]).to eq("Wed, 22 Jul 2015 11:27:21 GMT")
-      expect(headers["date"]).to be_nil
+      expect(headers["date"]).to eq("Wed, 22 Jul 2015 11:27:21 GMT")
     end
 
     it "formats the headers with dashes correctly" do
@@ -175,8 +175,7 @@ RSpec.describe Rack::ReverseProxy do
       get "/2test"
 
       headers = last_response.headers.to_hash
-      expect(headers["X-Additional-Info"]).to eq("something")
-      expect(headers["x-additional-info"]).to be_nil
+      expect(headers["x-additional-info"]).to eq("something")
     end
 
     it "the response header includes content-length" do
