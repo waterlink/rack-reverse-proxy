@@ -93,11 +93,11 @@ module RackReverseProxy
       end
 
       def just_uri
-        URI.parse(url)
+        Addressable::URI.parse(url)
       end
 
       def uri_with_path
-        URI.join(url, path)
+        Addressable::URI.join(url, path)
       end
 
       def evaluate(url)
@@ -115,7 +115,7 @@ module RackReverseProxy
       end
 
       def substitute_matches
-        URI(matches.substitute(url))
+        Addressable::URI.parse(matches.substitute(url))
       end
     end
 
