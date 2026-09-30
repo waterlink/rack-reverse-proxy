@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module RackReverseProxy
   # Rule understands which urls need to be proxied
   class Rule
@@ -58,6 +60,7 @@ module RackReverseProxy
       return /^#{spec}/ if spec.is_a?(String)
       return spec if spec.respond_to?(:match)
       return spec if spec.respond_to?(:call)
+
       raise ArgumentError, "Invalid Rule for reverse_proxy"
     end
 
@@ -75,6 +78,7 @@ module RackReverseProxy
 
       def build_uri
         return nil unless url
+
         raw_uri
       end
 
@@ -89,6 +93,7 @@ module RackReverseProxy
       def raw_uri
         return substitute_matches if with_substitutions?
         return just_uri if has_custom_url
+
         uri_with_path
       end
 
@@ -103,6 +108,7 @@ module RackReverseProxy
       def evaluate(url)
         return unless url
         return url.call(env) if lazy?(url)
+
         url.clone
       end
 
@@ -134,6 +140,7 @@ module RackReverseProxy
         @headers = headers if accept_headers
         @spec_arity = spec.method(spec_match_method_name).arity
       end
+      # rubocop:enable Metrics/ParameterLists
 
       def any?
         found.any?
@@ -141,6 +148,7 @@ module RackReverseProxy
 
       def custom_url
         return url unless has_custom_url
+
         found.map do |match|
           match.url(path)
         end.first
@@ -167,7 +175,7 @@ module RackReverseProxy
       attr_reader :spec, :url, :path, :headers, :rackreq, :spec_arity, :has_custom_url
 
       def found
-        @_found ||= find_matches
+        @found ||= find_matches
       end
 
       def find_matches
@@ -177,7 +185,7 @@ module RackReverseProxy
       end
 
       def spec_params
-        @_spec_params ||= _spec_params
+        @spec_params ||= _spec_params
       end
 
       def _spec_params
@@ -189,16 +197,18 @@ module RackReverseProxy
       end
 
       def spec_param_count
-        @_spec_param_count ||= _spec_param_count
+        @spec_param_count ||= _spec_param_count
       end
 
       def _spec_param_count
         return 1 if spec_arity == -1
+
         spec_arity
       end
 
       def spec_match_method_name
         return :match if spec.respond_to?(:match)
+
         :call
       end
     end

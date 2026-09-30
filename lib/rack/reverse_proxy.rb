@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "rack_reverse_proxy"
 
 # Re-opening Rack module only to define ReverseProxy constant

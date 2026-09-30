@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 require "cgi"
 require "base64"
@@ -24,7 +26,7 @@ RSpec.describe Rack::ReverseProxy do
     )
   end
 
-  describe "global options", focus: true do
+  describe "global options" do
     it "starts with default global options" do
       m = Rack::ReverseProxy.new(dummy_app) do
         reverse_proxy "/test", "http://example.com/"
@@ -34,22 +36,29 @@ RSpec.describe Rack::ReverseProxy do
     it "allows options to be set via reverse_proxy_options, maintains global defaults" do
       m = Rack::ReverseProxy.new(dummy_app) do
         reverse_proxy "/test", "http://example.com/"
-        reverse_proxy_options preserve_host: "preserve_host_val"
+        reverse_proxy_options :preserve_host => "preserve_host_val"
       end
       expect(m.instance_variable_get(:@global_options)).to_not eq(RackReverseProxy::Middleware::DEFAULT_OPTIONS)
       expect(m.instance_variable_get(:@global_options)[:preserve_host]).to eq("preserve_host_val")
-      raise "necessary condition for test is missing" if RackReverseProxy::Middleware::DEFAULT_OPTIONS[:x_forwarded_headers].nil?
+      if RackReverseProxy::Middleware::DEFAULT_OPTIONS[:x_forwarded_headers].nil?
+        raise "necessary condition for test is missing"
+      end
+
       expect(m.instance_variable_get(:@global_options)[:x_forwarded_headers]).to eq(RackReverseProxy::Middleware::DEFAULT_OPTIONS[:x_forwarded_headers])
     end
     it "supports multiple commulative invocations of reverse_proxy_options" do
       m = Rack::ReverseProxy.new(dummy_app) do
         reverse_proxy "/test", "http://example.com/"
-        reverse_proxy_options preserve_host: "preserve_host_val", stripped_headers: ["foo"]
-        reverse_proxy_options replace_response_host: "replace_response_host_val", stripped_headers: ["bar"]
+        reverse_proxy_options :preserve_host => "preserve_host_val", :stripped_headers => ["foo"]
+        reverse_proxy_options :replace_response_host => "replace_response_host_val",
+                              :stripped_headers => ["bar"]
       end
-      expect(m.instance_variable_get(:@global_options)[:preserve_host]).to eq("preserve_host_val")
-      expect(m.instance_variable_get(:@global_options)[:replace_response_host]).to eq("replace_response_host_val")
-      expect(m.instance_variable_get(:@global_options)[:stripped_headers]).to eq(["bar"])
+      expect(m.instance_variable_get(:@global_options)[:preserve_host])
+        .to eq("preserve_host_val")
+      expect(m.instance_variable_get(:@global_options)[:replace_response_host])
+        .to eq("replace_response_host_val")
+      expect(m.instance_variable_get(:@global_options)[:stripped_headers])
+        .to eq(["bar"])
     end
   end
 
@@ -73,10 +82,10 @@ RSpec.describe Rack::ReverseProxy do
       expect(last_response.body).to eq("Proxied App")
     end
 
-    it "produces a response header of type HeaderHash" do
+    it "produces a response header of type Headers" do
       stub_request(:get, "http://example.com/test")
       get "/test"
-      expect(last_response.headers).to be_an_instance_of(Rack::Utils::HeaderHash)
+      expect(last_response.headers).to be_an_instance_of(Rack::Headers)
     end
 
     it "parses the headers as a Hash with values of type String" do
@@ -154,7 +163,7 @@ RSpec.describe Rack::ReverseProxy do
       expect(headers["Status"]).to be_nil
     end
 
-    it "formats the headers correctly to avoid duplicates" do
+    it "compares keys case-insensitive" do
       stub_request(:get, "http://example.com/2test").to_return(
         :headers => { :date => "Wed, 22 Jul 2015 11:27:21 GMT" }
       )
@@ -163,7 +172,7 @@ RSpec.describe Rack::ReverseProxy do
 
       headers = last_response.headers.to_hash
       expect(headers["Date"]).to eq("Wed, 22 Jul 2015 11:27:21 GMT")
-      expect(headers["date"]).to be_nil
+      expect(headers["date"]).to eq("Wed, 22 Jul 2015 11:27:21 GMT")
     end
 
     it "formats the headers with dashes correctly" do
@@ -175,8 +184,7 @@ RSpec.describe Rack::ReverseProxy do
       get "/2test"
 
       headers = last_response.headers.to_hash
-      expect(headers["X-Additional-Info"]).to eq("something")
-      expect(headers["x-additional-info"]).to be_nil
+      expect(headers["x-additional-info"]).to eq("something")
     end
 
     it "the response header includes content-length" do
@@ -252,7 +260,7 @@ RSpec.describe Rack::ReverseProxy do
 
       describe "with stripped_headers set" do
         before do
-          @stripped_headers = ["Accept-Encoding", "Foo-Bar"]
+          @stripped_headers = %w[Accept-Encoding Foo-Bar]
           def app
             # so the value is constant in the closure below
             stripped_headers = @stripped_headers
@@ -265,13 +273,11 @@ RSpec.describe Rack::ReverseProxy do
         it "removes the stripped headers" do
           subject
           expect(
-            a_request(:get, "http://example.com/test").with{ |req|
-              req.headers.each do |header, value|
-                if @stripped_headers.include?(header)
-                  fail "expected #{header} to not be present"
-                end
+            a_request(:get, "http://example.com/test").with do |req|
+              req.headers.each_key do |header|
+                raise "expected #{header} to not be present" if @stripped_headers.include?(header)
               end
-            }
+            end
           ).to have_been_made
         end
       end
@@ -358,7 +364,7 @@ RSpec.describe Rack::ReverseProxy do
 
       it "makes request with basic auth" do
         stub_request(:get, "http://example.com/test/stuff").with(
-          :basic_auth => %w(joe shmoe)
+          :basic_auth => %w[joe shmoe]
         ).to_return(
           :body => "secured content"
         )
@@ -553,7 +559,7 @@ RSpec.describe Rack::ReverseProxy do
         end
       end
 
-      %w(get head delete put post).each do |method|
+      %w[get head delete put post].each do |method|
         describe "and using method #{method}" do
           it "forwards the correct request" do
             stub_request(method.to_sym, "http://example.com/test").to_return(
@@ -563,7 +569,7 @@ RSpec.describe Rack::ReverseProxy do
             expect(last_response.body).to eq("Proxied App for #{method}")
           end
 
-          if %w(put post).include?(method)
+          if %w[put post].include?(method)
             it "forwards the request payload" do
               stub_request(
                 method.to_sym,
@@ -599,16 +605,18 @@ RSpec.describe Rack::ReverseProxy do
     end
 
     describe "with a matching class" do
-      #:nodoc:
+      # :nodoc:
       class Matcher
         def self.match(path)
           return unless path =~ %r{^/(test|users)}
+
           Matcher.new
         end
 
         def url(path)
-          return "http://users-example.com" + path if path.include?("user")
-          "http://example.com" + path
+          return "http://users-example.com#{path}" if path.include?("user")
+
+          "http://example.com#{path}"
         end
       end
 
@@ -637,7 +645,7 @@ RSpec.describe Rack::ReverseProxy do
     end
 
     describe "with a matching and transforming class" do
-      #:nodoc:
+      # :nodoc:
       class MatcherAndTransformer
         def self.match(_path)
           MatcherAndTransformer.new
@@ -650,8 +658,8 @@ RSpec.describe Rack::ReverseProxy do
         def transform(response, request_uri)
           status, headers, body = response
           location = headers["Location"]
-          headers["Location"] = "?url=" + CGI.escape(location) +
-                                "&request_uri=" + CGI.escape(request_uri.to_s)
+          headers["Location"] =
+            "?url=#{CGI.escape(location)}&request_uri=#{CGI.escape(request_uri.to_s)}"
           [status, headers, body]
         end
       end
@@ -677,7 +685,7 @@ RSpec.describe Rack::ReverseProxy do
     end
 
     describe "with a matching class" do
-      #:nodoc:
+      # :nodoc:
       class RequestMatcher
         attr_accessor :rackreq
 
@@ -687,12 +695,14 @@ RSpec.describe Rack::ReverseProxy do
 
         def self.match(path, _headers, rackreq)
           return nil unless path =~ %r{^/(test|users)}
+
           RequestMatcher.new(rackreq)
         end
 
         def url(path)
           return nil unless rackreq.params["user"] == "omer"
-          "http://users-example.com" + path
+
+          "http://users-example.com#{path}"
         end
       end
 
@@ -722,7 +732,7 @@ RSpec.describe Rack::ReverseProxy do
     end
 
     describe "with a matching class that accepts headers" do
-      #:nodoc:
+      # :nodoc:
       class MatcherHeaders
         def self.match(path, headers)
           MatcherHeaders.new if path.match(%r{^/test}) &&
@@ -731,7 +741,7 @@ RSpec.describe Rack::ReverseProxy do
         end
 
         def url(path)
-          "http://example.com" + path
+          "http://example.com#{path}"
         end
       end
 

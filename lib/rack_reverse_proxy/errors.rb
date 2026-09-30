@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module RackReverseProxy
   module Errors
     # GenericURI indicates that url is too generic
@@ -20,6 +22,8 @@ module RackReverseProxy
       def initialize(path, matches)
         @path = path
         @matches = matches
+
+        super to_s
       end
 
       def to_s

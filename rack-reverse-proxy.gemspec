@@ -1,8 +1,9 @@
-lib = File.expand_path("../lib", __FILE__)
+# frozen_string_literal: true
+
+lib = File.expand_path("lib", __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "rack_reverse_proxy/version"
 
-# rubocop:disable
 Gem::Specification.new do |spec|
   spec.name          = "rack-reverse-proxy"
   spec.version       = RackReverseProxy::VERSION
@@ -22,10 +23,10 @@ Gem::Specification.new do |spec|
   ]
 
   spec.summary       = "A Simple Reverse Proxy for Rack"
-  spec.description   = <<eos
-A Rack based reverse proxy for basic needs.
-Useful for testing or in cases where webserver configuration is unavailable.
-eos
+  spec.description   = <<~DESC
+    A Rack based reverse proxy for basic needs.
+    Useful for testing or in cases where webserver configuration is unavailable.
+  DESC
 
   spec.homepage      = "https://github.com/waterlink/rack-reverse-proxy"
   spec.license       = "MIT"
@@ -35,10 +36,11 @@ eos
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "rack", ">= 1.0.0"
-  spec.add_dependency "rack-proxy", "~> 0.6", ">= 0.6.1"
+  spec.required_ruby_version = ">= 3.3"
 
-  spec.add_development_dependency "bundler", "~> 1.7"
-  spec.add_development_dependency "rake", "~> 10.3"
+  spec.add_dependency "rack", ">= 1.0.0"
+  spec.add_dependency "rack-proxy", ">= 0.7.0", "< 3"
+
+  spec.add_development_dependency "bundler", ">= 2.5"
+  spec.add_development_dependency "rake", "~> 13.2"
 end
-# rubocop:enable

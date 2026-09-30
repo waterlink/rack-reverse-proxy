@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  rubocop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3
+          bundler-cache: true
+      - name: rubocop
+        run: bundle exec rubocop
+
+  rspec:
+    runs-on: ubuntu-latest
+    name: ruby ${{ matrix.ruby }}
+    strategy:
+      matrix:
+        ruby:
+          - '3.3'
+          - '3.4'
+          - '4.0'
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: rspec
+        run: bundle exec rspec

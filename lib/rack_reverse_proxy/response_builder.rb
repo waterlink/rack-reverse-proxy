@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module RackReverseProxy
   # ResponseBuilder knows target response building process
   class ResponseBuilder
@@ -22,24 +24,27 @@ module RackReverseProxy
 
     def set_read_timeout
       return unless read_timeout?
+
       target_response.read_timeout = options[:timeout]
     end
 
     def read_timeout?
-      options[:timeout].to_i > 0
+      options[:timeout].to_i.positive?
     end
 
     def handle_https
       return unless https?
+
       target_response.use_ssl = true
     end
 
     def https?
-      "https" == uri.scheme
+      uri.scheme == "https"
     end
 
     def handle_verify_mode
       return unless verify_mode?
+
       target_response.verify_mode = options[:verify_mode]
     end
 
@@ -48,7 +53,7 @@ module RackReverseProxy
     end
 
     def target_response
-      @_target_response ||= Rack::HttpStreamingResponse.new(
+      @target_response ||= Rack::HttpStreamingResponse.new(
         target_request,
         uri.host,
         uri.port

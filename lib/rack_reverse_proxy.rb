@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "rack_reverse_proxy/version"
 require "rack_reverse_proxy/errors"
 require "rack_reverse_proxy/rule"

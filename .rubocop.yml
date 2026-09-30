@@ -1,8 +1,20 @@
-Style/StringLiterals:
-  EnforcedStyle: double_quotes
+AllCops:
+  TargetRubyVersion: 3.3
 
-Metrics/LineLength:
+Layout/LineLength:
   Max: 100
+
+Lint/ConstantDefinitionInBlock:
+  Exclude:
+    - spec/**/*_spec.rb
+
+Metrics/BlockLength:
+  Exclude:
+    - rack-reverse-proxy.gemspec
+    - spec/**/*_spec.rb
+
+Style/EachWithObject:
+  Enabled: false
 
 #begin ruby 1.8 support
 Style/HashSyntax:
@@ -11,11 +23,15 @@ Style/HashSyntax:
 Style/Lambda:
   Enabled: false
 
-Style/TrailingCommaInLiteral:
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: no_comma
+
+Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: no_comma
 
 Style/TrailingCommaInArguments:
   EnforcedStyleForMultiline: no_comma
 
-Style/EachWithObject:
-  Enabled: false
